@@ -12,7 +12,10 @@ import {
   ShoppingBag,
   CreditCard,
   Banknote,
-  RotateCcw
+  RotateCcw,
+  CloudOff,
+  RefreshCw,
+  Check
 } from 'lucide-react';
 
 export default function POS({ currentUser, onSaleComplete }) {
@@ -27,11 +30,30 @@ export default function POS({ currentUser, onSaleComplete }) {
   const [completedOrder, setCompletedOrder] = useState(null);
   const [completedChange, setCompletedChange] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState('');
   const [error, setError] = useState('');
+  const [offlineQueue, setOfflineQueue] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dukaflow_offline_orders') || '[]');
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     loadCatalog();
   }, [selectedCategory, search]);
+
+  useEffect(() => {
+    function handleOnline() {
+      if (offlineQueue.length > 0) {
+        syncOfflineSales();
+      }
+    }
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [offlineQueue]);
 
   async function loadCatalog() {
     try {
@@ -39,10 +61,81 @@ export default function POS({ currentUser, onSaleComplete }) {
         api.getProducts(`status=active${selectedCategory ? `&categoryId=${selectedCategory}` : ''}${search ? `&search=${search}` : ''}`),
         api.getCategories()
       ]);
-      setProducts(prodsRes.products || []);
-      setCategories(catsRes.categories || []);
+      const prods = prodsRes.products || [];
+      const cats = catsRes.categories || [];
+      setProducts(prods);
+      setCategories(cats);
+      // Cache products for offline capability
+      try {
+        localStorage.setItem('dukaflow_cached_products', JSON.stringify(prods));
+        localStorage.setItem('dukaflow_cached_categories', JSON.stringify(cats));
+      } catch (e) {
+        // storage quota fallback
+      }
     } catch (err) {
-      console.error('POS Catalog load error:', err);
+      console.warn('POS Catalog load error (attempting offline cache):', err);
+      try {
+        const cachedP = JSON.parse(localStorage.getItem('dukaflow_cached_products') || '[]');
+        const cachedC = JSON.parse(localStorage.getItem('dukaflow_cached_categories') || '[]');
+        if (cachedP.length > 0) {
+          setProducts(cachedP);
+          setCategories(cachedC);
+        }
+      } catch {
+        // Ignore cache parse error
+      }
+    }
+  }
+
+  function saveOfflineQueue(queue) {
+    setOfflineQueue(queue);
+    try {
+      localStorage.setItem('dukaflow_offline_orders', JSON.stringify(queue));
+    } catch {
+      // storage quota fallback
+    }
+  }
+
+  async function syncOfflineSales() {
+    if (offlineQueue.length === 0 || syncing) return;
+    setSyncing(true);
+    setSyncFeedback('');
+    let syncedCount = 0;
+    const remaining = [...offlineQueue];
+
+    for (const item of offlineQueue) {
+      try {
+        const orderRes = await api.createOrder({
+          customerName: item.customerName,
+          customerPhone: item.customerPhone,
+          fulfilmentType: 'pickup',
+          items: item.items,
+          paymentMethod: 'cash'
+        });
+
+        const createdOrder = orderRes.order;
+        await api.recordCash({
+          orderId: createdOrder._id,
+          tenderedAmount: item.tenderedAmount
+        });
+
+        await api.updateOrderStatus(createdOrder._id, 'completed', 'Synced from offline POS buffer');
+        syncedCount++;
+        const idx = remaining.findIndex((r) => r.id === item.id);
+        if (idx !== -1) remaining.splice(idx, 1);
+      } catch (err) {
+        console.error('Failed to sync offline order:', item.id, err);
+        break; // Stop sync attempt if network still down
+      }
+    }
+
+    saveOfflineQueue(remaining);
+    setSyncing(false);
+    if (syncedCount > 0) {
+      setSyncFeedback(`Successfully synced ${syncedCount} offline sale${syncedCount > 1 ? 's' : ''}!`);
+      loadCatalog();
+      if (onSaleComplete) onSaleComplete();
+      setTimeout(() => setSyncFeedback(''), 5000);
     }
   }
 
@@ -90,14 +183,55 @@ export default function POS({ currentUser, onSaleComplete }) {
     setError('');
     setProcessing(true);
 
+    const items = cart.map((i) => ({ productId: i._id, quantity: i.quantity, unitPrice: i.sellingPrice, name: i.name }));
+    const cName = customerName.trim() || 'Counter Customer';
+    const cPhone = customerPhone.trim() || '0700000000';
+
+    // If offline, save straight to offline queue
+    if (!navigator.onLine) {
+      const offlineOrder = {
+        id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        orderNumber: `OFF-${Date.now().toString().slice(-6)}`,
+        customerName: cName,
+        customerPhone: cPhone,
+        items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
+        lineItems: cart,
+        tenderedAmount: tenderedCents,
+        changeAmount: changeDue,
+        total: grandTotal,
+        createdAt: new Date().toISOString(),
+        isOffline: true
+      };
+
+      const newQ = [...offlineQueue, offlineOrder];
+      saveOfflineQueue(newQ);
+
+      // Deduct available stock locally
+      setProducts((prev) =>
+        prev.map((p) => {
+          const inCart = cart.find((c) => c._id === p._id);
+          if (inCart) {
+            return { ...p, available: Math.max(0, p.available - inCart.quantity) };
+          }
+          return p;
+        })
+      );
+
+      setCompletedOrder(offlineOrder);
+      setCompletedChange(changeDue);
+      setCart([]);
+      setTenderedInput('');
+      setProcessing(false);
+      return;
+    }
+
     try {
       // 1. Create order
-      const items = cart.map((i) => ({ productId: i._id, quantity: i.quantity }));
       const orderRes = await api.createOrder({
-        customerName: customerName.trim() || 'Counter Customer',
-        customerPhone: customerPhone.trim() || '0700000000',
+        customerName: cName,
+        customerPhone: cPhone,
         fulfilmentType: 'pickup',
-        items,
+        items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
         paymentMethod: 'cash'
       });
 
@@ -119,7 +253,30 @@ export default function POS({ currentUser, onSaleComplete }) {
       loadCatalog();
       if (onSaleComplete) onSaleComplete();
     } catch (err) {
-      setError(err.message);
+      // If network failure during request, fallback to queue
+      if (err.message?.includes('fetch') || !navigator.onLine) {
+        const offlineOrder = {
+          id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          orderNumber: `OFF-${Date.now().toString().slice(-6)}`,
+          customerName: cName,
+          customerPhone: cPhone,
+          items: items.map((it) => ({ productId: it.productId, quantity: it.quantity })),
+          lineItems: cart,
+          tenderedAmount: tenderedCents,
+          changeAmount: changeDue,
+          total: grandTotal,
+          createdAt: new Date().toISOString(),
+          isOffline: true
+        };
+        const newQ = [...offlineQueue, offlineOrder];
+        saveOfflineQueue(newQ);
+        setCompletedOrder(offlineOrder);
+        setCompletedChange(changeDue);
+        setCart([]);
+        setTenderedInput('');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setProcessing(false);
     }
@@ -129,6 +286,32 @@ export default function POS({ currentUser, onSaleComplete }) {
     <div className="pos-layout">
       {/* Left Column: Product Grid & Barcode Search */}
       <div className="pos-catalog">
+        {/* Offline Outbox Banner */}
+        {offlineQueue.length > 0 && (
+          <div className="pos-offline-banner">
+            <div className="pos-offline-info">
+              <CloudOff size={18} className="text-amber" />
+              <span>
+                <strong>{offlineQueue.length} sale{offlineQueue.length > 1 ? 's' : ''}</strong> stored in offline buffer.
+              </span>
+            </div>
+            <button
+              className="pos-sync-btn"
+              onClick={syncOfflineSales}
+              disabled={syncing || !navigator.onLine}
+            >
+              <RefreshCw size={14} className={syncing ? 'spin' : ''} />
+              {syncing ? 'Syncing...' : 'Sync Now'}
+            </button>
+          </div>
+        )}
+
+        {syncFeedback && (
+          <div className="sf-alert success mt-2 mb-2">
+            <Check size={16} /> {syncFeedback}
+          </div>
+        )}
+
         <div className="pos-search-bar">
           <div className="pos-input-wrap">
             <Barcode size={18} className="pos-icon" />
@@ -295,7 +478,7 @@ export default function POS({ currentUser, onSaleComplete }) {
             <div className="sf-order-confirmed-banner">
               <CheckCircle size={40} className="text-emerald" />
               <h2>Sale Completed!</h2>
-              <p>Order: <b>{completedOrder.orderNumber}</b></p>
+              <p>Order: <b>{completedOrder.orderNumber}</b> {completedOrder.isOffline ? '(Stored in Offline Outbox)' : ''}</p>
               <div className="pos-change-banner">
                 <span>CHANGE TO RETURN:</span>
                 <strong>{formatKes(completedChange)}</strong>

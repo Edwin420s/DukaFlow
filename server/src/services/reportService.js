@@ -45,15 +45,46 @@ export async function getSalesReport({ startDate, endDate }) {
   let totalDeliveryFees = 0;
   let paidOrdersCount = 0;
 
+  const productMap = new Map();
+  const dailyMap = new Map();
+
   for (const o of orders) {
-    if (o.paymentStatus === 'paid') {
+    const isPaid = o.paymentStatus === 'paid';
+    if (isPaid) {
       totalRevenue += o.grandTotal;
       paidOrdersCount += 1;
     }
     totalDiscounts += o.discountTotal || 0;
     totalTaxes += o.taxTotal || 0;
     totalDeliveryFees += o.deliveryFee || 0;
+
+    // Daily breakdown
+    const dayKey = new Date(o.createdAt).toISOString().slice(0, 10);
+    const dayStat = dailyMap.get(dayKey) || { date: dayKey, revenue: 0, orders: 0 };
+    if (isPaid) dayStat.revenue += o.grandTotal;
+    dayStat.orders += 1;
+    dailyMap.set(dayKey, dayStat);
+
+    // Product performance
+    if (o.items) {
+      for (const item of o.items) {
+        const pKey = String(item.productId);
+        const pStat = productMap.get(pKey) || {
+          productId: pKey,
+          productName: item.productName,
+          sku: item.sku,
+          unitsSold: 0,
+          revenue: 0
+        };
+        pStat.unitsSold += item.quantity;
+        if (isPaid) pStat.revenue += item.total;
+        productMap.set(pKey, pStat);
+      }
+    }
   }
+
+  const topProducts = Array.from(productMap.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+  const dailySales = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
 
   return {
     ordersCount: orders.length,
@@ -62,6 +93,8 @@ export async function getSalesReport({ startDate, endDate }) {
     totalDiscounts,
     totalTaxes,
     totalDeliveryFees,
+    topProducts,
+    dailySales,
     orders
   };
 }

@@ -14,6 +14,7 @@ import StaffView from '../views/StaffView.jsx';
 import ReportsView from '../views/ReportsView.jsx';
 import AuditView from '../views/AuditView.jsx';
 import SettingsView from '../views/SettingsView.jsx';
+import CouponsView from '../views/CouponsView.jsx';
 
 import {
   BarChart3,
@@ -33,7 +34,8 @@ import {
   Wifi,
   WifiOff,
   UserCheck,
-  Check
+  Check,
+  Tag
 } from 'lucide-react';
 
 const navItems = [
@@ -42,6 +44,7 @@ const navItems = [
   ['Products', '/products', Package],
   ['Inventory', '/inventory', Boxes],
   ['Orders', '/orders', ClipboardList],
+  ['Coupons', '/coupons', Tag],
   ['Suppliers', '/suppliers', Truck],
   ['Returns', '/returns', RotateCcw],
   ['Customers', '/customers', Users],
@@ -311,6 +314,7 @@ export default function App() {
           <Route path="/products" element={<ProductsView />} />
           <Route path="/inventory" element={<InventoryView />} />
           <Route path="/orders" element={<OrdersView />} />
+          <Route path="/coupons" element={<CouponsView />} />
           <Route path="/suppliers" element={<SuppliersView />} />
           <Route path="/returns" element={<ReturnsView />} />
           <Route path="/customers" element={<CustomersView />} />
