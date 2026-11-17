@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import mongoose from 'mongoose';
 import { env } from './config/env.js';
 import { requestContext } from './middleware/request-context.js';
 import { errorHandler, notFoundHandler } from './shared/errors.js';
@@ -55,8 +56,8 @@ app.get('/api/v1/health', (_req, res) =>
 );
 
 app.get('/api/v1/readiness', (_req, res) => {
-  const ready = Boolean(process.env.MONGODB_URI);
-  res.status(ready ? 200 : 503).json({ ready, databaseConfigured: ready });
+  const isDbReady = mongoose.connection.readyState === 1 || Boolean(process.env.MONGODB_URI);
+  res.status(isDbReady ? 200 : 503).json({ ready: isDbReady, databaseConfigured: isDbReady });
 });
 
 // Mount Routes

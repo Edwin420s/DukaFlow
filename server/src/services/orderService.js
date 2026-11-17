@@ -17,7 +17,7 @@ function generateOrderNumber() {
 
 const VALID_TRANSITIONS = {
   pending: ['confirmed', 'cancelled', 'rejected'],
-  confirmed: ['preparing', 'cancelled'],
+  confirmed: ['preparing', 'completed', 'cancelled'],
   preparing: ['ready_for_pickup', 'dispatched', 'completed', 'cancelled'],
   ready_for_pickup: ['completed', 'cancelled'],
   dispatched: ['completed', 'cancelled'],

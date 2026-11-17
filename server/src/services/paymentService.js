@@ -344,7 +344,7 @@ export async function handleMpesaCallback({ callbackBody }) {
     }
   }
 
-  return { acknowledged: true, status: payment.status };
+  return { acknowledged: true, success: payment.status === 'paid', status: payment.status };
 }
 
 export async function processRefund({ paymentId, refundAmount, reason = '', actor = null, req = null }) {

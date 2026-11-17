@@ -76,6 +76,19 @@ paymentsRouter.post('/mpesa/stkpush', optionalAuth, validateBody(stkPushSchema),
   }
 });
 
+paymentsRouter.post('/mpesa/initiate', optionalAuth, validateBody(stkPushSchema), async (req, res, next) => {
+  try {
+    const result = await initiateMpesaStkPush({
+      orderId: req.body.orderId,
+      phoneNumber: req.body.phoneNumber,
+      req
+    });
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Safaricom Daraja Webhook Callback (Public, server-to-server)
 paymentsRouter.post('/mpesa/callback', async (req, res, next) => {
   try {

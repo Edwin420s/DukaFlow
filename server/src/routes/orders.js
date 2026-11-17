@@ -11,7 +11,7 @@ export const ordersRouter = express.Router();
 const createOrderSchema = z.object({
   customerType: z.enum(['guest', 'registered']).optional().default('guest'),
   customerName: z.string().min(2),
-  customerEmail: z.string().email().optional().default(''),
+  customerEmail: z.string().email().or(z.literal('')).optional().default(''),
   customerPhone: z.string().min(9),
   fulfilmentType: z.enum(['pickup', 'delivery']),
   deliveryAddress: z
@@ -46,7 +46,8 @@ const transitionStatusSchema = z.object({
     'cancelled',
     'rejected'
   ]),
-  note: z.string().optional().default('')
+  note: z.string().optional().default(''),
+  notes: z.string().optional().default('')
 });
 
 ordersRouter.get('/', requireAuth, async (req, res, next) => {
@@ -109,7 +110,7 @@ ordersRouter.patch('/:id/status', requireAuth, validateBody(transitionStatusSche
     const order = await transitionOrderStatus({
       orderId: req.params.id,
       newStatus: req.body.status,
-      note: req.body.note,
+      note: req.body.note || req.body.notes || '',
       actor: req.user,
       req
     });

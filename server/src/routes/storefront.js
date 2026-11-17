@@ -160,7 +160,7 @@ storefrontRouter.post('/calculate', validateBody(calculateSchema), async (req, r
 
 const checkoutSchema = z.object({
   customerName: z.string().min(2),
-  customerEmail: z.string().email().optional().default(''),
+  customerEmail: z.string().email().or(z.literal('')).optional().default(''),
   customerPhone: z.string().min(9),
   fulfilmentType: z.enum(['pickup', 'delivery']),
   deliveryAddress: z
