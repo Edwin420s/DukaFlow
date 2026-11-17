@@ -35,7 +35,9 @@ import {
   WifiOff,
   UserCheck,
   Check,
-  Tag
+  Tag,
+  Menu,
+  X
 } from 'lucide-react';
 
 const navItems = [
@@ -65,6 +67,12 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
 
   // Auth form
   const [loginEmail, setLoginEmail] = useState('');
@@ -168,12 +176,27 @@ export default function App() {
 
   return (
     <div className="shell">
+      {/* Mobile Drawer Backdrop */}
+      {isMobileNavOpen && (
+        <div className="sidebar-backdrop" onClick={() => setIsMobileNavOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar">
-        <Link className="brand" to="/">
-          <span className="brand-mark">D</span>
-          <span>Duka<span className="brand-light">Flow</span></span>
-        </Link>
+      <aside className={`sidebar ${isMobileNavOpen ? 'open' : ''}`}>
+        <div className="sidebar-top-row">
+          <Link className="brand" to="/" onClick={() => setIsMobileNavOpen(false)}>
+            <span className="brand-mark">D</span>
+            <span>Duka<span className="brand-light">Flow</span></span>
+          </Link>
+          <button
+            type="button"
+            className="mobile-close-sidebar"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         {/* Switch to Storefront Button */}
         <button
@@ -234,9 +257,19 @@ export default function App() {
       {/* Main Backoffice Workspace */}
       <main className="main">
         <header className="topbar">
-          <span className="breadcrumb">
-            DukaFlow Retail <span>/</span> {navItems.find((n) => n[1] === location.pathname)?.[0] || 'Workspace'}
-          </span>
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="mobile-hamburger-btn"
+              onClick={() => setIsMobileNavOpen(true)}
+              aria-label="Open sidebar menu"
+            >
+              <Menu size={20} />
+            </button>
+            <span className="breadcrumb">
+              DukaFlow Retail <span>/</span> {navItems.find((n) => n[1] === location.pathname)?.[0] || 'Workspace'}
+            </span>
+          </div>
 
           <div className="topbar-right">
             {/* Online / Offline Status */}

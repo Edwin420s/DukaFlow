@@ -56,6 +56,7 @@ export default function Storefront({ onSwitchToPortal }) {
   const [checkoutTotals, setCheckoutTotals] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   // Active / Tracked Order
   const [activeOrder, setActiveOrder] = useState(null);
@@ -63,6 +64,13 @@ export default function Storefront({ onSwitchToPortal }) {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [mpesaPromptSent, setMpesaPromptSent] = useState(false);
   const [checkoutRequestId, setCheckoutRequestId] = useState(null);
+
+  function showToast(msg) {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((cur) => (cur === msg ? '' : cur));
+    }, 3200);
+  }
 
   useEffect(() => {
     localStorage.setItem('dukaflow_cart', JSON.stringify(cart));
@@ -129,7 +137,7 @@ export default function Storefront({ onSwitchToPortal }) {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-    setIsCartOpen(true);
+    showToast(`✓ Added "${product.name}" to your basket.`);
   }
 
   function updateQuantity(productId, delta) {
@@ -156,6 +164,19 @@ export default function Storefront({ onSwitchToPortal }) {
       await recalculate(couponCode.trim(), fulfilmentType, deliveryZone);
       setAppliedCoupon(couponCode.trim());
       setCouponCode('');
+      showToast(`Coupon "${couponCode.trim()}" applied!`);
+    } catch (err) {
+      setErrorMessage(err.message);
+    }
+  }
+
+  async function applyQuickCoupon(codeToApply) {
+    try {
+      await recalculate(codeToApply, fulfilmentType, deliveryZone);
+      setAppliedCoupon(codeToApply);
+      setCouponCode('');
+      setErrorMessage('');
+      showToast(`Coupon "${codeToApply}" applied!`);
     } catch (err) {
       setErrorMessage(err.message);
     }
@@ -282,6 +303,17 @@ export default function Storefront({ onSwitchToPortal }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                className="sf-search-clear"
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           <div className="sf-header-actions">
@@ -459,19 +491,40 @@ export default function Storefront({ onSwitchToPortal }) {
                 <div className="sf-coupon-section">
                   {appliedCoupon ? (
                     <div className="sf-applied-coupon">
-                      <span>Coupon <b>{appliedCoupon}</b> applied!</span>
+                      <span>✓ Coupon <b>{appliedCoupon}</b> applied!</span>
                       <button onClick={removeCoupon}>Remove</button>
                     </div>
                   ) : (
-                    <div className="sf-coupon-input-group">
-                      <input
-                        type="text"
-                        placeholder="Enter coupon (e.g. KARIBU10)"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      />
-                      <button onClick={applyCoupon}>Apply</button>
-                    </div>
+                    <>
+                      <div className="sf-coupon-input-group">
+                        <input
+                          type="text"
+                          placeholder="Enter coupon code..."
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        />
+                        <button onClick={applyCoupon}>Apply</button>
+                      </div>
+                      <div className="sf-quick-offers">
+                        <small className="text-muted">Available Offers (Click to apply):</small>
+                        <div className="sf-offer-pills">
+                          <button
+                            type="button"
+                            className="sf-offer-chip"
+                            onClick={() => applyQuickCoupon('KARIBU10')}
+                          >
+                            🏷️ <b>KARIBU10</b> (10% off)
+                          </button>
+                          <button
+                            type="button"
+                            className="sf-offer-chip"
+                            onClick={() => applyQuickCoupon('DUKA200')}
+                          >
+                            🏷️ <b>DUKA200</b> (KSh 200 off)
+                          </button>
+                        </div>
+                      </div>
+                    </>
                   )}
                   {errorMessage && <p className="sf-error-msg">{errorMessage}</p>}
                 </div>
@@ -555,7 +608,13 @@ export default function Storefront({ onSwitchToPortal }) {
                       required
                       placeholder="07XXXXXXXX or 01XXXXXXXX"
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomerPhone(val);
+                        if (!mpesaPhone || mpesaPhone === customerPhone) {
+                          setMpesaPhone(val);
+                        }
+                      }}
                     />
                   </label>
                   <label className="full-col">
@@ -885,6 +944,31 @@ export default function Storefront({ onSwitchToPortal }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Toast Notification */}
+      {toastMessage && (
+        <aside className="sf-toast-pill" role="status" aria-live="polite">
+          <span>{toastMessage}</span>
+          <button onClick={() => setIsCartOpen(true)} className="sf-toast-action">
+            View Basket ({totalCartCount}) →
+          </button>
+        </aside>
+      )}
+
+      {/* Mobile Floating Sticky Cart Bar */}
+      {totalCartCount > 0 && !isCartOpen && !isCheckoutOpen && (
+        <div className="sf-mobile-cart-bar">
+          <div className="sf-mobile-cart-info">
+            <ShoppingBag size={18} />
+            <span><b>{totalCartCount}</b> items</span>
+            <span className="dot">·</span>
+            <strong>{formatKes(checkoutTotals?.grandTotal || cart.reduce((s, i) => s + i.sellingPrice * i.quantity, 0))}</strong>
+          </div>
+          <button className="primary-button" onClick={() => setIsCartOpen(true)}>
+            View Basket →
+          </button>
         </div>
       )}
     </div>

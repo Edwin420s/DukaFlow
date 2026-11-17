@@ -15,7 +15,8 @@ import {
   RotateCcw,
   CloudOff,
   RefreshCw,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 
 export default function POS({ currentUser, onSaleComplete }) {
@@ -322,6 +323,16 @@ export default function POS({ currentUser, onSaleComplete }) {
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
             />
+            {search && (
+              <button
+                type="button"
+                className="pos-search-clear"
+                onClick={() => setSearch('')}
+                title="Clear filter"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
           <div className="pos-cats-scroll">
@@ -371,8 +382,20 @@ export default function POS({ currentUser, onSaleComplete }) {
       {/* Right Column: Active Cart & Cash Calculator */}
       <div className="pos-ticket">
         <div className="pos-ticket-header">
-          <h3>POS Quick Sale</h3>
-          <span className="pos-cashier-badge">Cashier: {currentUser?.name || 'Staff'}</span>
+          <div>
+            <h3>POS Quick Sale</h3>
+            <span className="pos-cashier-badge">Cashier: {currentUser?.name || 'Staff'}</span>
+          </div>
+          {cart.length > 0 && (
+            <button
+              type="button"
+              className="pos-btn-reset"
+              onClick={() => setCart([])}
+              title="Reset current cart"
+            >
+              <Trash2 size={13} /> Reset
+            </button>
+          )}
         </div>
 
         <div className="pos-customer-bar">
@@ -435,16 +458,25 @@ export default function POS({ currentUser, onSaleComplete }) {
               />
             </label>
             <div className="pos-change-display">
-              <span>Change Due:</span>
-              <strong className={changeDue > 0 ? 'text-emerald' : ''}>
-                {formatKes(changeDue)}
-              </strong>
+              {tenderedCents > 0 && tenderedCents < grandTotal ? (
+                <>
+                  <span className="text-amber">Remaining:</span>
+                  <strong className="text-amber">{formatKes(grandTotal - tenderedCents)}</strong>
+                </>
+              ) : (
+                <>
+                  <span>Change Due:</span>
+                  <strong className={changeDue > 0 ? 'text-emerald' : ''}>
+                    {formatKes(changeDue)}
+                  </strong>
+                </>
+              )}
             </div>
           </div>
 
           {/* Quick Cash Presets */}
           <div className="pos-cash-presets">
-            {[100, 200, 500, 1000, 2000].map((amt) => (
+            {[50, 100, 200, 500, 1000, 2000].map((amt) => (
               <button
                 key={amt}
                 type="button"
@@ -455,9 +487,10 @@ export default function POS({ currentUser, onSaleComplete }) {
             ))}
             <button
               type="button"
+              className="pos-preset-exact"
               onClick={() => setTenderedInput((grandTotal / 100).toFixed(2))}
             >
-              Exact
+              Exact ({formatKes(grandTotal)})
             </button>
           </div>
 
