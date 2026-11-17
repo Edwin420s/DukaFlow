@@ -9,6 +9,7 @@
     "dev:server": "npm --workspace server run dev",
     "dev:client": "npm --workspace client run dev",
     "build": "npm --workspace client run build",
+    "seed": "npm --workspace server run seed",
     "test": "npm --workspace server test && npm --workspace client test",
     "lint": "npm --workspace server run lint && npm --workspace client run lint"
   },
