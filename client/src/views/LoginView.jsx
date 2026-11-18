@@ -35,30 +35,50 @@ export default function LoginView({ onLoginSuccess }) {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Pre-fill demo role if in query
+  // Pre-fill or quick login demo role if in query
   useEffect(() => {
     const roleParam = searchParams.get('role');
-    if (roleParam === 'owner') fillDemo('owner');
-    else if (roleParam === 'cashier') fillDemo('cashier');
-    else if (roleParam === 'manager') fillDemo('manager');
-    else if (roleParam === 'customer') fillDemo('customer');
+    if (roleParam === 'owner') handleQuickDemoLogin('owner');
+    else if (roleParam === 'cashier') handleQuickDemoLogin('cashier');
+    else if (roleParam === 'manager') handleQuickDemoLogin('manager');
+    else if (roleParam === 'customer') handleQuickDemoLogin('customer');
   }, [searchParams]);
 
-  function fillDemo(roleType) {
+  async function handleQuickDemoLogin(roleType) {
     setMode('login');
     setError('');
-    if (roleType === 'owner') {
-      setEmail('owner@dukaflow.co.ke');
-      setPassword('DukaFlow2026!');
-    } else if (roleType === 'cashier') {
-      setEmail('cashier@dukaflow.co.ke');
-      setPassword('DukaFlow2026!');
-    } else if (roleType === 'manager') {
-      setEmail('manager@dukaflow.co.ke');
-      setPassword('DukaFlow2026!');
-    } else if (roleType === 'customer') {
-      setEmail('customer@dukaflow.co.ke');
-      setPassword('DukaFlow2026!');
+    setLoading(true);
+
+    let demoEmail = '';
+    const demoPassword = 'DukaFlow2026!';
+
+    if (roleType === 'owner') demoEmail = 'owner@dukaflow.co.ke';
+    else if (roleType === 'cashier') demoEmail = 'cashier@dukaflow.co.ke';
+    else if (roleType === 'manager') demoEmail = 'manager@dukaflow.co.ke';
+    else if (roleType === 'customer') demoEmail = 'customer@dukaflow.co.ke';
+
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+
+    try {
+      const res = await api.login(demoEmail, demoPassword);
+      if (res?.accessToken) {
+        localStorage.setItem('dukaflow_token', res.accessToken);
+      }
+      onLoginSuccess(res.user);
+
+      // Immediately navigate to the exact right account that belongs to that role!
+      if (res.user.role === 'cashier') {
+        navigate('/pos');
+      } else if (res.user.role === 'customer') {
+        navigate('/orders');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError(err.message || 'Quick login failed');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -76,11 +96,11 @@ export default function LoginView({ onLoginSuccess }) {
         }
         onLoginSuccess(res.user);
 
-        // Redirect based on role
+        // Redirect strictly to the exact right account that belongs to this user:
         if (res.user.role === 'cashier') {
           navigate('/pos');
         } else if (res.user.role === 'customer') {
-          navigate('/storefront');
+          navigate('/orders');
         } else {
           navigate('/dashboard');
         }
@@ -104,7 +124,7 @@ export default function LoginView({ onLoginSuccess }) {
         if (res.user.role === 'cashier') {
           navigate('/pos');
         } else if (res.user.role === 'customer') {
-          navigate('/storefront');
+          navigate('/orders');
         } else {
           navigate('/dashboard');
         }
@@ -127,13 +147,17 @@ export default function LoginView({ onLoginSuccess }) {
         </Link>
 
         <div className="topbar-right-links">
+          <a href="/landing#faqs" className="faq-link">
+            <span>FAQ</span>
+          </a>
+          <Link to="/storefront" className="storefront-link">
+            <Store size={15} />
+            <span>Customer Shop</span>
+            <span className="ext-icon">↗</span>
+          </Link>
           <Link to="/" className="back-link">
             <ArrowLeft size={15} />
             <span>Back to Home</span>
-          </Link>
-          <Link to="/storefront" className="storefront-link">
-            <Store size={15} />
-            <span>Customer Storefront</span>
           </Link>
         </div>
       </div>
@@ -145,7 +169,7 @@ export default function LoginView({ onLoginSuccess }) {
             <Sparkles size={20} className="text-emerald-500" />
             <div>
               <h3>Test DukaFlow by Role</h3>
-              <p>Experience how each independent user role works in an enterprise retail setting.</p>
+              <p>Click any account below to sign in immediately to the right role.</p>
             </div>
           </div>
 
@@ -153,7 +177,8 @@ export default function LoginView({ onLoginSuccess }) {
             <button
               type="button"
               className="demo-select-btn"
-              onClick={() => fillDemo('owner')}
+              onClick={() => handleQuickDemoLogin('owner')}
+              disabled={loading}
             >
               <div className="demo-btn-icon owner">
                 <ShieldCheck size={18} />
@@ -162,13 +187,14 @@ export default function LoginView({ onLoginSuccess }) {
                 <b>Shop Owner</b>
                 <small>Full Analytics, Staff, Audit, Shop Settings</small>
               </div>
-              <span className="fill-pill">1-Click Login</span>
+              <span className="fill-pill">Sign In as Owner →</span>
             </button>
 
             <button
               type="button"
               className="demo-select-btn"
-              onClick={() => fillDemo('cashier')}
+              onClick={() => handleQuickDemoLogin('cashier')}
+              disabled={loading}
             >
               <div className="demo-btn-icon cashier">
                 <ShoppingBag size={18} />
@@ -177,13 +203,14 @@ export default function LoginView({ onLoginSuccess }) {
                 <b>POS Cashier</b>
                 <small>Dedicated Touch Counter, Barcodes & Cash Presets</small>
               </div>
-              <span className="fill-pill">1-Click Login</span>
+              <span className="fill-pill">Sign In as Cashier →</span>
             </button>
 
             <button
               type="button"
               className="demo-select-btn"
-              onClick={() => fillDemo('manager')}
+              onClick={() => handleQuickDemoLogin('manager')}
+              disabled={loading}
             >
               <div className="demo-btn-icon manager">
                 <Boxes size={18} />
@@ -192,13 +219,14 @@ export default function LoginView({ onLoginSuccess }) {
                 <b>Store Manager</b>
                 <small>Stock Adjustments, PO Receiving, Returns Inspection</small>
               </div>
-              <span className="fill-pill">1-Click Login</span>
+              <span className="fill-pill">Sign In as Manager →</span>
             </button>
 
             <button
               type="button"
               className="demo-select-btn"
-              onClick={() => fillDemo('customer')}
+              onClick={() => handleQuickDemoLogin('customer')}
+              disabled={loading}
             >
               <div className="demo-btn-icon customer">
                 <Store size={18} />
@@ -207,7 +235,7 @@ export default function LoginView({ onLoginSuccess }) {
                 <b>Retail Customer</b>
                 <small>Online Shopping, M-Pesa STK & Personal Receipts</small>
               </div>
-              <span className="fill-pill">1-Click Login</span>
+              <span className="fill-pill">Sign In as Customer →</span>
             </button>
           </div>
         </div>

@@ -53,6 +53,11 @@ export default function LandingView({ onLoginClick, currentUser }) {
           </nav>
 
           <div className="landing-nav-actions">
+            <a href="#faqs" className="nav-faq-btn">
+              <HelpCircle size={15} />
+              <span>FAQ</span>
+            </a>
+
             <Link to="/storefront" className="nav-storefront-btn" title="Open Customer Online Store">
               <Store size={15} />
               <span>Customer Shop</span>
@@ -94,9 +99,14 @@ export default function LandingView({ onLoginClick, currentUser }) {
           </p>
 
           <div className="hero-cta-group">
+            <a href="#faqs" className="btn-hero-pill-faq">
+              <HelpCircle size={16} />
+              <span>FAQ</span>
+            </a>
             <Link to="/storefront" className="btn-hero-primary">
               <Store size={18} />
-              <span>Explore Demo Storefront</span>
+              <span>Customer Shop</span>
+              <span className="ext-icon">↗</span>
             </Link>
             {currentUser ? (
               <button
@@ -113,7 +123,8 @@ export default function LandingView({ onLoginClick, currentUser }) {
                 onClick={() => navigate('/login')}
               >
                 <ShoppingBag size={18} />
-                <span>Access Staff POS & Backoffice</span>
+                <span>Staff Sign In</span>
+                <ArrowRight size={16} />
               </button>
             )}
           </div>
@@ -654,20 +665,35 @@ export default function LandingView({ onLoginClick, currentUser }) {
         </div>
       </section>
 
-      {/* ----------------- Pre-Footer CTA ----------------- */}
+      {/* ----------------- Bottom Action Bar ----------------- */}
       <section className="landing-cta-banner">
         <div className="landing-container cta-container">
           <h2>Transform Your Retail Business Today</h2>
           <p>Join thousands of African retailers streamlining counter sales, e-commerce, and stockroom operations with DukaFlow.</p>
           <div className="cta-banner-buttons">
+            <a href="#faqs" className="btn-cta-faq">
+              <HelpCircle size={18} />
+              <span>FAQ</span>
+            </a>
             <Link to="/storefront" className="btn-cta-storefront">
               <Store size={18} />
-              <span>Explore Demo Storefront</span>
+              <span>Customer Shop</span>
+              <span className="ext-icon">↗</span>
             </Link>
-            <button className="btn-cta-signin" onClick={() => navigate('/login')}>
-              <span>Sign In to Staff Workspace</span>
-              <ArrowRight size={16} />
-            </button>
+            {currentUser ? (
+              <button
+                className="btn-cta-signin"
+                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
+              >
+                <span>My Workspace ({currentUser.name.split(' ')[0]})</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button className="btn-cta-signin" onClick={() => navigate('/login')}>
+                <span>Staff Sign In</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
           </div>
         </div>
       </section>

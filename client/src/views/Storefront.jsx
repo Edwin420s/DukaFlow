@@ -20,7 +20,7 @@ import {
   Smartphone
 } from 'lucide-react';
 
-export default function Storefront({ onSwitchToPortal }) {
+export default function Storefront({ onSwitchToPortal, currentUser }) {
   const [shop, setShop] = useState(null);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -42,17 +42,29 @@ export default function Storefront({ onSwitchToPortal }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Checkout form
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerName, setCustomerName] = useState(currentUser?.name || '');
+  const [customerPhone, setCustomerPhone] = useState(currentUser?.phone || '');
+  const [customerEmail, setCustomerEmail] = useState(currentUser?.email || '');
   const [fulfilmentType, setFulfilmentType] = useState('pickup');
   const [deliveryStreet, setDeliveryStreet] = useState('');
   const [deliveryZone, setDeliveryZone] = useState('');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
-  const [mpesaPhone, setMpesaPhone] = useState('');
+  const [mpesaPhone, setMpesaPhone] = useState(currentUser?.phone || '');
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
+
+  // Pre-fill customer details from logged in user
+  useEffect(() => {
+    if (currentUser) {
+      if (currentUser.name && !customerName) setCustomerName(currentUser.name);
+      if (currentUser.phone) {
+        if (!customerPhone) setCustomerPhone(currentUser.phone);
+        if (!mpesaPhone) setMpesaPhone(currentUser.phone);
+      }
+      if (currentUser.email && !customerEmail) setCustomerEmail(currentUser.email);
+    }
+  }, [currentUser]);
   const [checkoutTotals, setCheckoutTotals] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -280,7 +292,9 @@ export default function Storefront({ onSwitchToPortal }) {
       <div className="sf-announcement">
         <span>📍 Same-Day Express Delivery across Nairobi & Free In-Store Pickup at Commercial Plaza</span>
         <button onClick={onSwitchToPortal} className="sf-portal-badge">
-          Staff Portal & POS →
+          {currentUser
+            ? `Signed in as ${currentUser.name.split(' ')[0]} (${currentUser.role.toUpperCase()}) →`
+            : 'Staff Sign In →'}
         </button>
       </div>
 
