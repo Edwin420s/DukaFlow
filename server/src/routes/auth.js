@@ -95,7 +95,24 @@ authRouter.post('/register', validateBody(registerSchema), async (req, res, next
 authRouter.post('/login', validateBody(loginSchema), async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
+
+    // Seed customer demo account dynamically if not present
+    if (!user && email.toLowerCase() === 'customer@dukaflow.co.ke' && password === 'DukaFlow2026!') {
+      const defaultShop = await Shop.findOne();
+      const passwordHash = await hashPassword('DukaFlow2026!');
+      user = await User.create({
+        name: 'Alice Wambui',
+        email: 'customer@dukaflow.co.ke',
+        phone: '+254700112233',
+        passwordHash,
+        role: 'customer',
+        permissions: ['orders.view'],
+        status: 'active',
+        shopId: defaultShop?._id
+      });
+    }
+
     if (!user) {
       throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
     }

@@ -97,6 +97,17 @@ export async function runSeed() {
     shopId: shop._id
   });
 
+  const customer = await User.create({
+    name: 'Alice Wambui',
+    email: 'customer@dukaflow.co.ke',
+    phone: '+254700112233',
+    passwordHash: defaultPass,
+    role: 'customer',
+    permissions: ['orders.view'],
+    status: 'active',
+    shopId: shop._id
+  });
+
   // 3. Categories
   await Category.deleteMany({});
   const catProduce = await Category.create({

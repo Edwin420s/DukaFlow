@@ -43,15 +43,6 @@ export default function LandingView({ onLoginClick, currentUser }) {
             <span className="badge-enterprise">ENTERPRISE</span>
           </Link>
 
-          <nav className="landing-nav-links">
-            <a href="#pos">POS Counter</a>
-            <a href="#storefront">Storefront</a>
-            <a href="#inventory">Stockroom</a>
-            <a href="#roles">Team Roles</a>
-            <a href="#benefits">Why DukaFlow</a>
-            <a href="#faqs">FAQ</a>
-          </nav>
-
           <div className="landing-nav-actions">
             <a href="#faqs" className="nav-faq-btn">
               <HelpCircle size={15} />
@@ -59,7 +50,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
             </a>
 
             <Link
-              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              to={currentUser ? "/storefront" : "/login?redirect=/storefront"}
               className="nav-storefront-btn"
               title="Open Customer Online Store"
             >
@@ -108,7 +99,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <span>FAQ</span>
             </a>
             <Link
-              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              to={currentUser ? "/storefront" : "/login?redirect=/storefront"}
               className="btn-hero-primary"
             >
               <Store size={18} />
@@ -283,7 +274,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
                   </ul>
                   <div className="tour-actions">
                     <Link
-                      to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+                      to={currentUser ? "/storefront" : "/login?redirect=/storefront"}
                       className="primary-button"
                     >
                       View Live Storefront
@@ -491,7 +482,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               </div>
               <button
                 className="btn-role-action"
-                onClick={() => navigate('/login?role=owner')}
+                onClick={() => navigate('/login')}
               >
                 Sign In as Owner →
               </button>
@@ -516,7 +507,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               </div>
               <button
                 className="btn-role-action"
-                onClick={() => navigate('/login?role=manager')}
+                onClick={() => navigate('/login')}
               >
                 Sign In as Manager →
               </button>
@@ -541,7 +532,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               </div>
               <button
                 className="btn-role-action"
-                onClick={() => navigate('/login?role=cashier')}
+                onClick={() => navigate('/login')}
               >
                 Sign In as Cashier →
               </button>
@@ -566,7 +557,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               </div>
               <button
                 className="btn-role-action customer-btn"
-                onClick={() => navigate('/login?role=customer&redirect=/storefront')}
+                onClick={() => navigate('/login?redirect=/storefront')}
               >
                 Sign In as Customer →
               </button>
@@ -691,7 +682,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <span>FAQ</span>
             </a>
             <Link
-              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              to={currentUser ? "/storefront" : "/login?redirect=/storefront"}
               className="btn-cta-storefront"
             >
               <Store size={18} />
@@ -735,7 +726,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
           <div className="footer-links-col">
             <b>Product</b>
             <a href="#pos">Point of Sale</a>
-            <Link to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}>Customer Storefront</Link>
+            <Link to={currentUser ? "/storefront" : "/login?redirect=/storefront"}>Customer Storefront</Link>
             <a href="#inventory">Inventory Ledger</a>
             <a href="#purchasing">Purchase Orders</a>
             <a href="#reports">Valuation & Analytics</a>
@@ -743,10 +734,10 @@ export default function LandingView({ onLoginClick, currentUser }) {
 
           <div className="footer-links-col">
             <b>Roles & Security</b>
-            <button onClick={() => navigate('/login?role=owner')}>Shop Owner Portal</button>
-            <button onClick={() => navigate('/login?role=manager')}>Store Manager Portal</button>
-            <button onClick={() => navigate('/login?role=cashier')}>POS Cashier Terminal</button>
-            <Link to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}>Customer Shopping</Link>
+            <button onClick={() => navigate('/login')}>Shop Owner Portal</button>
+            <button onClick={() => navigate('/login')}>Store Manager Portal</button>
+            <button onClick={() => navigate('/login')}>POS Cashier Terminal</button>
+            <Link to={currentUser ? "/storefront" : "/login?redirect=/storefront"}>Customer Shopping</Link>
           </div>
 
           <div className="footer-links-col">

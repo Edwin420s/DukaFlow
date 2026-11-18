@@ -119,7 +119,7 @@ test('4. POS Offline Outbox Buffer Invariants', async (t) => {
 
 test('5. Landing Page Navigation & Route Guard Logic', async (t) => {
   function getCustomerShopTarget(currentUser) {
-    return currentUser ? '/storefront' : '/login?role=customer&redirect=/storefront';
+    return currentUser ? '/storefront' : '/login?redirect=/storefront';
   }
 
   function getWorkspaceTarget(currentUser) {
@@ -151,7 +151,7 @@ test('5. Landing Page Navigation & Route Guard Logic', async (t) => {
   }
 
   await t.test('unauthenticated visitors are directed to login when clicking Customer Shop', () => {
-    assert.equal(getCustomerShopTarget(null), '/login?role=customer&redirect=/storefront');
+    assert.equal(getCustomerShopTarget(null), '/login?redirect=/storefront');
     assert.equal(getWorkspaceTarget(null), '/login');
   });
 

@@ -169,7 +169,7 @@ export default function App() {
       if (authChecked) {
         return (
           <Navigate
-            to="/login?role=customer&redirect=/storefront"
+            to="/login?redirect=/storefront"
             replace
             state={{ from: location, message: 'Please sign in to access the customer store.' }}
           />

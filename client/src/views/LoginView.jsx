@@ -35,15 +35,6 @@ export default function LoginView({ onLoginSuccess }) {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Pre-fill or quick login demo role if in query
-  useEffect(() => {
-    const roleParam = searchParams.get('role');
-    if (roleParam === 'owner') handleQuickDemoLogin('owner');
-    else if (roleParam === 'cashier') handleQuickDemoLogin('cashier');
-    else if (roleParam === 'manager') handleQuickDemoLogin('manager');
-    else if (roleParam === 'customer') handleQuickDemoLogin('customer');
-  }, [searchParams]);
-
   function navigateUserToAuthorizedWorkspace(user) {
     const redirectParam = searchParams.get('redirect');
     if (user.role === 'cashier') {
@@ -140,14 +131,6 @@ export default function LoginView({ onLoginSuccess }) {
         </Link>
 
         <div className="topbar-right-links">
-          <a href="/landing#faqs" className="faq-link">
-            <span>FAQ</span>
-          </a>
-          <Link to="/storefront" className="storefront-link">
-            <Store size={15} />
-            <span>Customer Shop</span>
-            <span className="ext-icon">↗</span>
-          </Link>
           <Link to="/" className="back-link">
             <ArrowLeft size={15} />
             <span>Back to Home</span>
