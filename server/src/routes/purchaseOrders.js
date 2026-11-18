@@ -14,8 +14,8 @@ export const purchaseOrdersRouter = express.Router();
 
 function generatePoNumber() {
   const d = new Date();
-  const dateStr = d.toISOString().slice(0, 7).replace(/-/g, '');
-  const rand = Math.floor(100 + Math.random() * 900);
+  const dateStr = d.toISOString().slice(0, 10).replace(/-/g, '');
+  const rand = `${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
   return `PO-${dateStr}-${rand}`;
 }
 

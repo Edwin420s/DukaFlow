@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-r
 import { api } from '../api.js';
 import LandingView from '../views/LandingView.jsx';
 import LoginView from '../views/LoginView.jsx';
+import ProfileView from '../views/ProfileView.jsx';
 import Storefront from '../views/Storefront.jsx';
 import DashboardView from '../views/DashboardView.jsx';
 import POS from '../views/POS.jsx';
@@ -42,7 +43,8 @@ import {
   X,
   Lock,
   ArrowRight,
-  Globe
+  Globe,
+  User
 } from 'lucide-react';
 
 const allNavItems = [
@@ -58,7 +60,8 @@ const allNavItems = [
   { label: 'Staff', path: '/staff', icon: UserCheck, roles: ['owner'] },
   { label: 'Reports', path: '/reports', icon: Activity, roles: ['owner', 'manager'] },
   { label: 'Audit Logs', path: '/audit', icon: ShieldAlert, roles: ['owner'] },
-  { label: 'Settings', path: '/settings', icon: Settings, roles: ['owner'] }
+  { label: 'Settings', path: '/settings', icon: Settings, roles: ['owner'] },
+  { label: 'My Profile', path: '/profile', icon: User, roles: ['owner', 'manager', 'cashier', 'customer'] }
 ];
 
 export default function App() {
@@ -138,27 +141,6 @@ export default function App() {
     } catch {}
   }
 
-  async function quickLogin(email, password) {
-    try {
-      const res = await api.login(email, password);
-      if (res?.accessToken) {
-        localStorage.setItem('dukaflow_token', res.accessToken);
-      }
-      setCurrentUser(res.user);
-      loadShop();
-
-      if (res.user.role === 'cashier') {
-        navigate('/pos');
-      } else if (res.user.role === 'customer') {
-        navigate('/orders');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err) {
-      console.error('Quick login failed:', err);
-    }
-  }
-
   async function handleLogout() {
     try {
       await api.logout();
@@ -177,7 +159,8 @@ export default function App() {
 
   // Route modes:
   const isStorefront = location.pathname.startsWith('/storefront');
-  const isLanding = location.pathname === '/' || location.pathname === '/landing';
+  const isExplicitLanding = location.pathname === '/landing' || location.pathname === '/about';
+  const isRoot = location.pathname === '/';
   const isLoginOrRegister = location.pathname === '/login' || location.pathname === '/register';
 
   // 1. Customer Storefront
@@ -195,8 +178,8 @@ export default function App() {
     );
   }
 
-  // 2. Landing Page (Public showcase of product)
-  if (isLanding) {
+  // 2. Explicit Landing Page (Accessible whether logged in or out)
+  if (isExplicitLanding) {
     return (
       <LandingView
         currentUser={currentUser}
@@ -205,7 +188,25 @@ export default function App() {
     );
   }
 
-  // 3. Login or Registration View
+  // 3. Root Path "/" Handling:
+  // If not logged in -> Show Landing Page
+  // If logged in -> DO NOT show Landing Page; redirect straight to appropriate workspace
+  if (isRoot) {
+    if (!currentUser) {
+      return (
+        <LandingView
+          currentUser={currentUser}
+          onLoginClick={() => navigate('/login')}
+        />
+      );
+    }
+    // Logged in: navigate straight to workspace
+    if (currentUser.role === 'cashier') return <Navigate to="/pos" replace />;
+    if (currentUser.role === 'customer') return <Navigate to="/orders" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // 4. Login or Registration View
   if (isLoginOrRegister) {
     if (currentUser) {
       // If already logged in, redirect to user's home
@@ -223,7 +224,7 @@ export default function App() {
     );
   }
 
-  // 4. Route Guard for Protected Backoffice/Staff/Customer Workspace:
+  // 5. Route Guard for Protected Backoffice/Staff/Customer Workspace:
   // If user is NOT logged in and attempting to access an internal page, redirect to Login
   if (!currentUser && authChecked) {
     return (
@@ -249,7 +250,7 @@ export default function App() {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${isMobileNavOpen ? 'open' : ''}`}>
         <div className="sidebar-top-row">
-          <Link className="brand" to="/" onClick={() => setIsMobileNavOpen(false)}>
+          <Link className="brand" to={userRole === 'cashier' ? '/pos' : userRole === 'customer' ? '/orders' : '/dashboard'} onClick={() => setIsMobileNavOpen(false)}>
             <span className="brand-mark">D</span>
             <span>Duka<span className="brand-light">Flow</span></span>
           </Link>
@@ -279,12 +280,12 @@ export default function App() {
           <span className="shop-avatar">{shop?.name?.slice(0, 2).toUpperCase() || 'DF'}</span>
           <div>
             <b>{shop?.name || 'DukaFlow Store'}</b>
-            <small>{currentUser?.shopId ? 'Independent Tenant' : 'Single branch'} · Nairobi</small>
+            <small>Single branch · Nairobi</small>
           </div>
         </div>
 
         <p className="nav-label">
-          {userRole === 'customer' ? 'CUSTOMER ACCOUNT' : userRole === 'cashier' ? 'CASHIER TERMINAL' : 'ENTERPRISE WORKSPACE'}
+          {userRole === 'customer' ? 'MY ACCOUNT' : userRole === 'cashier' ? 'CASHIER TERMINAL' : 'ENTERPRISE WORKSPACE'}
         </p>
 
         <nav>
@@ -305,7 +306,7 @@ export default function App() {
 
         {/* Sidebar Footer with Active User Profile */}
         <div className="sidebar-bottom">
-          <div className="profile">
+          <div className="profile cursor-pointer" onClick={() => navigate('/profile')} title="Click to view & edit profile">
             <div className={`profile-avatar role-${userRole}`}>
               {currentUser?.name?.slice(0, 2).toUpperCase() || 'US'}
             </div>
@@ -315,15 +316,22 @@ export default function App() {
                 {userRole.toUpperCase()}
               </small>
             </div>
-            <button className="icon-btn ml-auto" onClick={handleLogout} title="Log Out">
+            <button
+              className="icon-btn ml-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogout();
+              }}
+              title="Log Out"
+            >
               <LogOut size={15} />
             </button>
           </div>
 
           <div className="sidebar-public-links mt-2">
-            <Link to="/" className="text-xs text-muted d-flex items-center gap-1">
+            <Link to="/landing" className="text-xs text-muted d-flex items-center gap-1">
               <Globe size={12} />
-              <span>Product Landing Page</span>
+              <span>Product Overview (Landing)</span>
             </Link>
           </div>
         </div>
@@ -351,11 +359,6 @@ export default function App() {
             <span className={`network-status-badge ${isOnline ? 'online' : 'offline'}`}>
               {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
               <span>{isOnline ? 'Cloud Synced' : 'Offline Buffer'}</span>
-            </span>
-
-            <span className={`tenant-isolation-pill role-${userRole}`}>
-              <Lock size={11} />
-              <span>Isolated Account · {userRole.toUpperCase()}</span>
             </span>
           </div>
 
@@ -400,43 +403,45 @@ export default function App() {
               </div>
             )}
 
-            {/* Role Demo Switcher */}
-            <div className="role-switcher">
-              <span className="text-xs text-muted">Role:</span>
-              <button
-                className={`role-pill ${userRole === 'owner' ? 'active' : ''}`}
-                onClick={() => quickLogin('owner@dukaflow.co.ke', 'DukaFlow2026!')}
-                title="Switch to Owner account"
-              >
-                Owner
-              </button>
-              <button
-                className={`role-pill ${userRole === 'manager' ? 'active' : ''}`}
-                onClick={() => quickLogin('manager@dukaflow.co.ke', 'DukaFlow2026!')}
-                title="Switch to Manager account"
-              >
-                Manager
-              </button>
-              <button
-                className={`role-pill ${userRole === 'cashier' ? 'active' : ''}`}
-                onClick={() => quickLogin('cashier@dukaflow.co.ke', 'DukaFlow2026!')}
-                title="Switch to Cashier account"
-              >
-                Cashier
-              </button>
-              <button
-                className={`role-pill ${userRole === 'customer' ? 'active' : ''}`}
-                onClick={() => quickLogin('customer@dukaflow.co.ke', 'DukaFlow2026!')}
-                title="Switch to Customer account"
-              >
-                Customer
-              </button>
-            </div>
+            {/* Clean User Profile Quick Action */}
+            <button
+              className="topbar-user-pill"
+              onClick={() => navigate('/profile')}
+              title="View & Edit My Profile"
+            >
+              <div className={`avatar-circle-sm role-${userRole}`}>
+                {currentUser?.name?.slice(0, 2).toUpperCase() || 'US'}
+              </div>
+              <span className="topbar-user-name">{currentUser?.name}</span>
+              <span className={`role-badge-sm role-${userRole}`}>
+                {userRole.toUpperCase()}
+              </span>
+            </button>
+
+            <button
+              className="icon-btn"
+              onClick={handleLogout}
+              title="Sign Out"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 
         {/* Dynamic Protected Route Pages with Strict Role Guarding */}
         <Routes>
+          {/* Profile Details for All Users */}
+          <Route
+            path="/profile"
+            element={
+              <ProfileView
+                currentUser={currentUser}
+                onUserUpdated={(u) => setCurrentUser(u)}
+                shop={shop}
+              />
+            }
+          />
+
           {/* Dashboard: Owner & Manager only */}
           <Route
             path="/dashboard"

@@ -3538,3 +3538,284 @@ code, pre {
   .landing-nav-links { display: none; }
   .footer-content { grid-template-columns: 1fr; }
 }
+
+
+/* ----------------------------------------------------
+   Clean Topbar User Profile Pill
+---------------------------------------------------- */
+.topbar-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 6px;
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.topbar-user-pill:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.avatar-circle-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.avatar-circle-sm.role-owner { background: #1d4ed8; }
+.avatar-circle-sm.role-manager { background: #86198f; }
+.avatar-circle-sm.role-cashier { background: #047857; }
+.avatar-circle-sm.role-customer { background: #c2410c; }
+
+.topbar-user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-badge-sm {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.role-badge-sm.role-owner { background: #dbeafe; color: #1e40af; }
+.role-badge-sm.role-manager { background: #fae8ff; color: #701a75; }
+.role-badge-sm.role-cashier { background: #d1fae5; color: #065f46; }
+.role-badge-sm.role-customer { background: #ffedd5; color: #9a3412; }
+
+/* ----------------------------------------------------
+   Profile View & Account Settings
+---------------------------------------------------- */
+.profile-layout-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.profile-summary-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.profile-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 16px rgba(4, 120, 87, 0.2);
+}
+
+.profile-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: var(--text-main);
+}
+
+.role-badge-large {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
+  margin-bottom: 24px;
+}
+
+.role-badge-large.role-owner { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+.role-badge-large.role-manager { background: #fae8ff; color: #701a75; border: 1px solid #f5d0fe; }
+.role-badge-large.role-cashier { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.role-badge-large.role-customer { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+
+.profile-meta-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.profile-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.profile-meta-item svg {
+  color: #047857;
+  flex-shrink: 0;
+}
+
+.profile-divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
+
+.profile-quick-links {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.profile-quick-links b {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.profile-action-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.profile-action-link:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.profile-forms-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  margin-top: 4px;
+}
+
+.form-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* ----------------------------------------------------
+   Why Retailers Choose DukaFlow (Landing Page Benefits)
+---------------------------------------------------- */
+.landing-benefits-section {
+  padding: 80px 0;
+  background: #f8fafc;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.benefit-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+}
+
+.benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+  border-color: #cbd5e1;
+}
+
+.benefit-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.benefit-card h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 10px;
+  color: #0f172a;
+}
+
+.benefit-card p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .profile-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .benefits-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

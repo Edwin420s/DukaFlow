@@ -38,6 +38,7 @@ export const api = {
   register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   logout: () => request('/auth/logout', { method: 'POST' }),
   getMe: () => request('/auth/me'),
+  updateProfile: (payload) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(payload) }),
 
   // Shop Settings
   getShop: () => request('/shop'),

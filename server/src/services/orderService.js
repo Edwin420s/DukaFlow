@@ -11,7 +11,7 @@ import { AppError } from '../shared/errors.js';
 function generateOrderNumber() {
   const d = new Date();
   const dateStr = d.toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.floor(1000 + Math.random() * 9000);
+  const rand = `${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
   return `ORD-${dateStr}-${rand}`;
 }
 

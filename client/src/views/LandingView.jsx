@@ -44,11 +44,11 @@ export default function LandingView({ onLoginClick, currentUser }) {
           </Link>
 
           <nav className="landing-nav-links">
-            <a href="#features">Features</a>
             <a href="#pos">POS Counter</a>
             <a href="#storefront">Storefront</a>
+            <a href="#inventory">Stockroom</a>
             <a href="#roles">Team Roles</a>
-            <a href="#pricing">Pricing</a>
+            <a href="#benefits">Why DukaFlow</a>
             <a href="#faqs">FAQ</a>
           </nav>
 
@@ -64,7 +64,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
                 className="nav-portal-btn logged-in"
                 onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
               >
-                <span>Workspace ({currentUser.name.split(' ')[0]})</span>
+                <span>My Workspace ({currentUser.name.split(' ')[0]})</span>
                 <ArrowRight size={14} />
               </button>
             ) : (
@@ -98,13 +98,24 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <Store size={18} />
               <span>Explore Demo Storefront</span>
             </Link>
-            <button
-              className="btn-hero-secondary"
-              onClick={() => navigate('/login')}
-            >
-              <ShoppingBag size={18} />
-              <span>Access Staff POS & Backoffice</span>
-            </button>
+            {currentUser ? (
+              <button
+                className="btn-hero-secondary"
+                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
+              >
+                <ShoppingBag size={18} />
+                <span>Return to My Workspace ({currentUser.name.split(' ')[0]})</span>
+                <ArrowRight size={16} />
+              </button>
+            ) : (
+              <button
+                className="btn-hero-secondary"
+                onClick={() => navigate('/login')}
+              >
+                <ShoppingBag size={18} />
+                <span>Access Staff POS & Backoffice</span>
+              </button>
+            )}
           </div>
 
           {/* Trust badges */}
@@ -538,76 +549,62 @@ export default function LandingView({ onLoginClick, currentUser }) {
         </div>
       </section>
 
-      {/* ----------------- Pricing Section ----------------- */}
-      <section className="landing-pricing-section" id="pricing">
+      {/* ----------------- Why Retailers Choose DukaFlow ----------------- */}
+      <section className="landing-benefits-section" id="benefits">
         <div className="landing-container">
           <div className="section-header text-center">
-            <span className="section-kicker">SIMPLE, TRANSPARENT PLANS</span>
-            <h2 className="section-title">Affordable Pricing for Every Retail Stage</h2>
-            <p className="section-desc">No hidden charges or setup fees. All plans include 16% VAT compliance and M-Pesa Daraja support.</p>
+            <span className="section-kicker">BUILT FOR SPEED & RELIABILITY</span>
+            <h2 className="section-title">Why Leading Retailers Choose DukaFlow</h2>
+            <p className="section-desc">Engineered from the ground up for single-shop and multi-branch retail in Kenya and East Africa.</p>
           </div>
 
-          <div className="pricing-grid">
-            <div className="pricing-card">
-              <div className="plan-name">Starter Duka</div>
-              <div className="plan-price">
-                <span className="currency">KSh</span>
-                <span className="amount">2,500</span>
-                <span className="period">/ month</span>
+          <div className="benefits-grid">
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <Zap size={22} className="text-emerald-600" />
               </div>
-              <p className="plan-summary">Perfect for single kiosks, minimarts, and independent grocery shops.</p>
-              <ul className="plan-features">
-                <li><CheckCircle2 size={16} /> 1 Active POS Cashier Terminal</li>
-                <li><CheckCircle2 size={16} /> Online Customer Storefront</li>
-                <li><CheckCircle2 size={16} /> Up to 500 Active Product SKUs</li>
-                <li><CheckCircle2 size={16} /> M-Pesa STK Push Integration</li>
-                <li><CheckCircle2 size={16} /> Offline PWA Sales Sync</li>
-              </ul>
-              <button className="btn-plan outline" onClick={() => navigate('/login?mode=register&plan=starter')}>
-                Get Started
-              </button>
+              <h3>Zero-Latency POS Checkout</h3>
+              <p>Scan barcodes or tap products and ring counter sales in under 3 seconds. Kenyan currency note presets and instant change calculations keep queues moving smoothly.</p>
             </div>
 
-            <div className="pricing-card featured">
-              <div className="featured-pill">MOST POPULAR</div>
-              <div className="plan-name">Growth Retailer</div>
-              <div className="plan-price">
-                <span className="currency">KSh</span>
-                <span className="amount">6,500</span>
-                <span className="period">/ month</span>
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <Smartphone size={22} className="text-emerald-600" />
               </div>
-              <p className="plan-summary">For busy supermarkets, multi-counter shops, and expanding distributors.</p>
-              <ul className="plan-features">
-                <li><CheckCircle2 size={16} /> <b>Up to 4 POS Terminals</b></li>
-                <li><CheckCircle2 size={16} /> <b>Unlimited Product SKUs</b></li>
-                <li><CheckCircle2 size={16} /> Purchase Orders & Supplier Costing</li>
-                <li><CheckCircle2 size={16} /> Customer Returns & Restock Quarantine</li>
-                <li><CheckCircle2 size={16} /> Role-Based Access (Manager, Cashier)</li>
-                <li><CheckCircle2 size={16} /> 1-Click CSV Accounting Exports</li>
-              </ul>
-              <button className="btn-plan primary" onClick={() => navigate('/login?mode=register&plan=growth')}>
-                Start 14-Day Free Trial
-              </button>
+              <h3>Automated M-Pesa STK Push</h3>
+              <p>Prompts the customer’s Safaricom phone directly for their PIN. Payment webhook callbacks confirm receipts with 100% idempotency—eliminating manual ledger cross-checks.</p>
             </div>
 
-            <div className="pricing-card">
-              <div className="plan-name">Enterprise Omnichannel</div>
-              <div className="plan-price">
-                <span className="currency">KSh</span>
-                <span className="amount">15,000</span>
-                <span className="period">/ month</span>
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <Boxes size={22} className="text-emerald-600" />
               </div>
-              <p className="plan-summary">For retail chains, multi-branch operations, and warehouse hubs.</p>
-              <ul className="plan-features">
-                <li><CheckCircle2 size={16} /> <b>Unlimited POS Terminals</b></li>
-                <li><CheckCircle2 size={16} /> Multi-Warehouse Stock Transfers</li>
-                <li><CheckCircle2 size={16} /> Dedicated Account Manager & SLA</li>
-                <li><CheckCircle2 size={16} /> Custom KRA eTIMS API Integration</li>
-                <li><CheckCircle2 size={16} /> Advanced Audit Logs & Security Export</li>
-              </ul>
-              <button className="btn-plan outline" onClick={() => navigate('/login?mode=register&plan=enterprise')}>
-                Contact Enterprise Sales
-              </button>
+              <h3>Atomic Inventory Protection</h3>
+              <p>Orders hold live stock reservations at the database level. Counter sales and online orders never double-sell the same carton or piece.</p>
+            </div>
+
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <WifiOff size={22} className="text-emerald-600" />
+              </div>
+              <h3>100% Offline PWA Resilience</h3>
+              <p>Power cuts or local Wi-Fi drops won't stop your sales. Cashiers can continue ringing sales offline in the browser outbox, which synchronizes automatically upon reconnecting.</p>
+            </div>
+
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <TrendingUp size={22} className="text-emerald-600" />
+              </div>
+              <h3>KRA 16% VAT Compliance</h3>
+              <p>Automatic tax segregation for standard 16% VAT, zero-rated foodstuffs (flour, unflavored milk), and tax-exempt goods. Generate 1-click CSV files ready for accounting.</p>
+            </div>
+
+            <div className="benefit-card">
+              <div className="benefit-icon-box">
+                <ShieldCheck size={22} className="text-emerald-600" />
+              </div>
+              <h3>Individual Account Privacy</h3>
+              <p>Every business operates within its own dedicated data boundary. Granular role-based security ensures cashiers focus on sales without viewing confidential financial reports.</p>
             </div>
           </div>
         </div>

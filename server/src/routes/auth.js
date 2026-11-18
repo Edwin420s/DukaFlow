@@ -160,7 +160,75 @@ authRouter.get('/me', requireAuth, (req, res) => {
       role: req.user.role,
       shopId: req.user.shopId,
       permissions: req.user.permissions,
+      createdAt: req.user.createdAt,
       lastLoginAt: req.user.lastLoginAt
     }
   });
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().min(6).optional()
+});
+
+authRouter.put('/profile', requireAuth, validateBody(updateProfileSchema), async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) throw new AppError('User not found', 404, 'NOT_FOUND');
+
+    const { name, email, phone, currentPassword, newPassword } = req.body;
+
+    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+      const existing = await User.findOne({ email: email.toLowerCase() });
+      if (existing) {
+        throw new AppError('An account with this email already exists', 409, 'EMAIL_EXISTS');
+      }
+      user.email = email.toLowerCase();
+    }
+
+    if (name) user.name = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+
+    if (newPassword) {
+      if (!currentPassword) {
+        throw new AppError('Current password is required to set a new password', 400, 'PASSWORD_REQUIRED');
+      }
+      const isValid = await comparePassword(currentPassword, user.passwordHash);
+      if (!isValid) {
+        throw new AppError('Incorrect current password', 401, 'INVALID_PASSWORD');
+      }
+      user.passwordHash = await hashPassword(newPassword);
+    }
+
+    await user.save();
+
+    await logAudit({
+      req,
+      action: 'user.profile_updated',
+      entityType: 'User',
+      entityId: user._id,
+      actor: user,
+      after: { name: user.name, email: user.email, phone: user.phone }
+    });
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        shopId: user.shopId,
+        permissions: user.permissions,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt
+      },
+      message: 'Profile updated successfully'
+    });
+  } catch (err) {
+    next(err);
+  }
 });

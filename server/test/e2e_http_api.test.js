@@ -136,6 +136,17 @@ test('HTTP API End-to-End Test Suite', async (t) => {
     const meRes = await http('GET', '/auth/me', null, ownerToken);
     assert.equal(meRes.status, 200);
     assert.equal(meRes.data.user.email, 'e2e_owner@dukaflow.co.ke');
+
+    // Verify PUT /auth/profile (Update personal details)
+    const updateProfileRes = await http(
+      'PUT',
+      '/auth/profile',
+      { name: 'Updated E2E Owner', phone: '0711223344' },
+      ownerToken
+    );
+    assert.equal(updateProfileRes.status, 200);
+    assert.equal(updateProfileRes.data.user.name, 'Updated E2E Owner');
+    assert.equal(updateProfileRes.data.user.phone, '0711223344');
   });
 
   await t.test('3. Storefront Journey (Browse, Calculate, Place Order, M-Pesa STK)', async () => {
@@ -306,6 +317,7 @@ test('HTTP API End-to-End Test Suite', async (t) => {
   });
 
   await t.test('6. Suppliers, Purchase Orders & Receiving Goods', async () => {
+    await PurchaseOrder.deleteMany({});
     // 6a. Create supplier
     const supRes = await http(
       'POST',

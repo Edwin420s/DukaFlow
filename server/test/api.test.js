@@ -296,6 +296,7 @@ test('5. Payment Processing & M-Pesa Idempotency', async (t) => {
     if (!cat) cat = await Category.create({ name: 'Test Cat', slug: 'test-cat' });
 
     await Product.deleteMany({ sku: 'PAY-P1' });
+    await Order.deleteMany({ customerPhone: '0722334455' });
     prod = await Product.create({
       name: 'Milk 500ml',
       slug: 'milk-500ml',

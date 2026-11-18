@@ -210,13 +210,6 @@ export default function LoginView({ onLoginSuccess }) {
               <span className="fill-pill">1-Click Login</span>
             </button>
           </div>
-
-          <div className="demo-isolation-note">
-            <Lock size={15} className="text-muted" />
-            <span>
-              <b>Strict Data Isolation:</b> Accounts only access their own authorized records. Cashiers cannot see financial reports or modify shop settings.
-            </span>
-          </div>
         </div>
 
         {/* Right Panel: Authentication Form */}
