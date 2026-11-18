@@ -18,10 +18,11 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
-  User
+  User,
+  LogOut
 } from 'lucide-react';
 
-export default function Storefront({ onSwitchToPortal, currentUser }) {
+export default function Storefront({ onSwitchToPortal, currentUser, onLogout }) {
   const [shop, setShop] = useState(null);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -292,11 +293,18 @@ export default function Storefront({ onSwitchToPortal, currentUser }) {
       {/* Top Announcements Banner */}
       <div className="sf-announcement">
         <span>📍 Same-Day Express Delivery across Nairobi & Free In-Store Pickup at Commercial Plaza</span>
-        <button onClick={onSwitchToPortal} className="sf-portal-badge">
-          {currentUser
-            ? `Signed in as ${currentUser.name.split(' ')[0]} (${currentUser.role.toUpperCase()}) →`
-            : 'Staff Sign In →'}
-        </button>
+        <div className="sf-announcement-actions">
+          <button onClick={onSwitchToPortal} className="sf-portal-badge">
+            {currentUser
+              ? `Signed in as ${currentUser.name.split(' ')[0]} (${currentUser.role.toUpperCase()}) →`
+              : 'Staff Sign In →'}
+          </button>
+          {currentUser && onLogout && (
+            <button onClick={onLogout} className="sf-announcement-logout" title="Sign Out">
+              Sign Out
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Storefront Header */}
@@ -348,6 +356,17 @@ export default function Storefront({ onSwitchToPortal, currentUser }) {
               >
                 <User size={16} />
                 <span>{currentUser.role === 'customer' ? 'My Account' : 'Workspace'}</span>
+              </button>
+            )}
+
+            {currentUser && onLogout && (
+              <button
+                className="sf-btn-logout"
+                onClick={onLogout}
+                title="Sign Out of DukaFlow"
+              >
+                <LogOut size={16} />
+                <span>Sign Out</span>
               </button>
             )}
 

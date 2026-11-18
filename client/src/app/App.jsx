@@ -146,6 +146,9 @@ export default function App() {
       await api.logout();
     } catch {}
     localStorage.removeItem('dukaflow_token');
+    localStorage.removeItem('dukaflow_cart');
+    setNotifications([]);
+    setUnreadCount(0);
     setCurrentUser(null);
     navigate('/');
   }
@@ -191,6 +194,7 @@ export default function App() {
           else if (currentUser.role === 'customer') navigate('/orders');
           else navigate('/dashboard');
         }}
+        onLogout={handleLogout}
       />
     );
   }
@@ -455,6 +459,7 @@ export default function App() {
                 currentUser={currentUser}
                 onUserUpdated={(u) => setCurrentUser(u)}
                 shop={shop}
+                onLogout={handleLogout}
               />
             }
           />
@@ -476,7 +481,7 @@ export default function App() {
             path="/pos"
             element={
               ['owner', 'manager', 'cashier'].includes(userRole) ? (
-                <POS currentUser={currentUser} />
+                <POS currentUser={currentUser} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/orders" replace />
               )

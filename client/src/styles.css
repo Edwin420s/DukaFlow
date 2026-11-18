@@ -983,6 +983,35 @@ code, pre {
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sf-portal-badge:hover {
+  background: var(--primary-hover);
+}
+
+.sf-announcement-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sf-announcement-logout {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sf-announcement-logout:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
 }
 
 .sf-header {
@@ -1080,6 +1109,27 @@ code, pre {
 .sf-btn-account:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
+}
+
+.sf-btn-logout {
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.sf-btn-logout:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #b91c1c;
 }
 
 .sf-btn-cart {
@@ -2035,6 +2085,33 @@ code, pre {
   cursor: pointer;
   display: flex;
   align-items: center;
+}
+
+.pos-ticket-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  color: #64748b;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-btn-logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
 }
 
 .pos-btn-reset {
@@ -3733,6 +3810,35 @@ code, pre {
   border-color: #cbd5e1;
 }
 
+.profile-logout-section {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.profile-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-logout-btn:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #991b1b;
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.12);
+}
+
 .profile-forms-column {
   display: flex;
   flex-direction: column;
@@ -4242,6 +4348,17 @@ html, body {
     padding: 4px 8px;
     font-size: 0.72rem;
   }
+  .sf-announcement-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .sf-announcement-logout {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
   .sf-header {
     padding: 10px 12px;
   }
@@ -4273,6 +4390,10 @@ html, body {
     font-size: 0.78rem;
   }
   .sf-btn-account {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+  .sf-btn-logout {
     padding: 6px 10px;
     font-size: 0.78rem;
   }

@@ -16,10 +16,11 @@ import {
   ArrowRight,
   ExternalLink,
   Save,
-  Key
+  Key,
+  LogOut
 } from 'lucide-react';
 
-export default function ProfileView({ currentUser, onUserUpdated, shop }) {
+export default function ProfileView({ currentUser, onUserUpdated, shop, onLogout }) {
   const [name, setName] = useState(currentUser?.name || '');
   const [email, setEmail] = useState(currentUser?.email || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
@@ -159,6 +160,20 @@ export default function ProfileView({ currentUser, onUserUpdated, shop }) {
               <ExternalLink size={13} className="ml-auto" />
             </Link>
           </div>
+
+          {onLogout && (
+            <div className="profile-logout-section">
+              <button
+                type="button"
+                className="profile-logout-btn"
+                onClick={onLogout}
+                title="Sign Out of My Account"
+              >
+                <LogOut size={16} />
+                <span>Sign Out of My Account</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Forms for Editing Details and Changing Password */}

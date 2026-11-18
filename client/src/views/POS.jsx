@@ -16,10 +16,11 @@ import {
   CloudOff,
   RefreshCw,
   Check,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
-export default function POS({ currentUser, onSaleComplete }) {
+export default function POS({ currentUser, onSaleComplete, onLogout }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -386,16 +387,28 @@ export default function POS({ currentUser, onSaleComplete }) {
             <h3>POS Quick Sale</h3>
             <span className="pos-cashier-badge">Cashier: {currentUser?.name || 'Staff'}</span>
           </div>
-          {cart.length > 0 && (
-            <button
-              type="button"
-              className="pos-btn-reset"
-              onClick={() => setCart([])}
-              title="Reset current cart"
-            >
-              <Trash2 size={13} /> Reset
-            </button>
-          )}
+          <div className="pos-ticket-actions">
+            {cart.length > 0 && (
+              <button
+                type="button"
+                className="pos-btn-reset"
+                onClick={() => setCart([])}
+                title="Reset current cart"
+              >
+                <Trash2 size={13} /> Reset
+              </button>
+            )}
+            {onLogout && (
+              <button
+                type="button"
+                className="pos-btn-logout"
+                onClick={onLogout}
+                title="Handover / Cashier Sign Out"
+              >
+                <LogOut size={13} /> Sign Out
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="pos-customer-bar">
