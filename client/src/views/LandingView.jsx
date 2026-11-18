@@ -58,7 +58,11 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <span>FAQ</span>
             </a>
 
-            <Link to="/storefront" className="nav-storefront-btn" title="Open Customer Online Store">
+            <Link
+              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              className="nav-storefront-btn"
+              title="Open Customer Online Store"
+            >
               <Store size={15} />
               <span>Customer Shop</span>
               <span className="ext-icon">↗</span>
@@ -67,7 +71,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
             {currentUser ? (
               <button
                 className="nav-portal-btn logged-in"
-                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
+                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/storefront' : '/dashboard')}
               >
                 <span>My Workspace ({currentUser.name.split(' ')[0]})</span>
                 <ArrowRight size={14} />
@@ -103,7 +107,10 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <HelpCircle size={16} />
               <span>FAQ</span>
             </a>
-            <Link to="/storefront" className="btn-hero-primary">
+            <Link
+              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              className="btn-hero-primary"
+            >
               <Store size={18} />
               <span>Customer Shop</span>
               <span className="ext-icon">↗</span>
@@ -111,7 +118,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
             {currentUser ? (
               <button
                 className="btn-hero-secondary"
-                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
+                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/storefront' : '/dashboard')}
               >
                 <ShoppingBag size={18} />
                 <span>Return to My Workspace ({currentUser.name.split(' ')[0]})</span>
@@ -275,7 +282,12 @@ export default function LandingView({ onLoginClick, currentUser }) {
                     <li><CheckCircle2 size={16} /> <b>Neighborhood Delivery Zones:</b> Set custom delivery fees for local estates (CBD, Westlands, Kilimani, Karen).</li>
                   </ul>
                   <div className="tour-actions">
-                    <Link to="/storefront" className="primary-button">View Live Storefront</Link>
+                    <Link
+                      to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+                      className="primary-button"
+                    >
+                      View Live Storefront
+                    </Link>
                   </div>
                 </div>
                 <div className="tour-visual card-mockup">
@@ -549,12 +561,15 @@ export default function LandingView({ onLoginClick, currentUser }) {
                 <li>Strict privacy: never sees other customer records</li>
               </ul>
               <div className="demo-credentials">
-                <span>Self-register or browse as Guest</span>
-                <span>Public Storefront access</span>
+                <span>Demo Email: <code>customer@dukaflow.co.ke</code></span>
+                <span>Password: <code>DukaFlow2026!</code></span>
               </div>
-              <Link to="/storefront" className="btn-role-action customer-btn">
-                Visit Customer Shop →
-              </Link>
+              <button
+                className="btn-role-action customer-btn"
+                onClick={() => navigate('/login?role=customer&redirect=/storefront')}
+              >
+                Sign In as Customer →
+              </button>
             </div>
           </div>
         </div>
@@ -675,7 +690,10 @@ export default function LandingView({ onLoginClick, currentUser }) {
               <HelpCircle size={18} />
               <span>FAQ</span>
             </a>
-            <Link to="/storefront" className="btn-cta-storefront">
+            <Link
+              to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}
+              className="btn-cta-storefront"
+            >
               <Store size={18} />
               <span>Customer Shop</span>
               <span className="ext-icon">↗</span>
@@ -683,7 +701,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
             {currentUser ? (
               <button
                 className="btn-cta-signin"
-                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/orders' : '/dashboard')}
+                onClick={() => navigate(currentUser.role === 'cashier' ? '/pos' : currentUser.role === 'customer' ? '/storefront' : '/dashboard')}
               >
                 <span>My Workspace ({currentUser.name.split(' ')[0]})</span>
                 <ArrowRight size={16} />
@@ -717,7 +735,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
           <div className="footer-links-col">
             <b>Product</b>
             <a href="#pos">Point of Sale</a>
-            <Link to="/storefront">Customer Storefront</Link>
+            <Link to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}>Customer Storefront</Link>
             <a href="#inventory">Inventory Ledger</a>
             <a href="#purchasing">Purchase Orders</a>
             <a href="#reports">Valuation & Analytics</a>
@@ -728,7 +746,7 @@ export default function LandingView({ onLoginClick, currentUser }) {
             <button onClick={() => navigate('/login?role=owner')}>Shop Owner Portal</button>
             <button onClick={() => navigate('/login?role=manager')}>Store Manager Portal</button>
             <button onClick={() => navigate('/login?role=cashier')}>POS Cashier Terminal</button>
-            <Link to="/storefront">Customer Shopping</Link>
+            <Link to={currentUser ? "/storefront" : "/login?role=customer&redirect=/storefront"}>Customer Shopping</Link>
           </div>
 
           <div className="footer-links-col">

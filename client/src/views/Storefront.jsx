@@ -17,7 +17,8 @@ import {
   X,
   CreditCard,
   Banknote,
-  Smartphone
+  Smartphone,
+  User
 } from 'lucide-react';
 
 export default function Storefront({ onSwitchToPortal, currentUser }) {
@@ -338,6 +339,17 @@ export default function Storefront({ onSwitchToPortal, currentUser }) {
             >
               <Clock size={16} /> Track Order
             </button>
+
+            {currentUser && (
+              <button
+                className="sf-btn-account"
+                onClick={onSwitchToPortal}
+                title={currentUser.role === 'customer' ? 'My Orders & Personal Profile' : 'Backoffice Workspace'}
+              >
+                <User size={16} />
+                <span>{currentUser.role === 'customer' ? 'My Account' : 'Workspace'}</span>
+              </button>
+            )}
 
             <button
               className="sf-btn-cart"

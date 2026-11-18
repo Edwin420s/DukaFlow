@@ -44,6 +44,17 @@ export default function LoginView({ onLoginSuccess }) {
     else if (roleParam === 'customer') handleQuickDemoLogin('customer');
   }, [searchParams]);
 
+  function navigateUserToAuthorizedWorkspace(user) {
+    const redirectParam = searchParams.get('redirect');
+    if (user.role === 'cashier') {
+      navigate('/pos');
+    } else if (user.role === 'customer') {
+      navigate(redirectParam && redirectParam.startsWith('/storefront') ? redirectParam : '/storefront');
+    } else {
+      navigate(redirectParam && !redirectParam.startsWith('/pos') && !redirectParam.startsWith('/login') ? redirectParam : '/dashboard');
+    }
+  }
+
   async function handleQuickDemoLogin(roleType) {
     setMode('login');
     setError('');
@@ -68,13 +79,7 @@ export default function LoginView({ onLoginSuccess }) {
       onLoginSuccess(res.user);
 
       // Immediately navigate to the exact right account that belongs to that role!
-      if (res.user.role === 'cashier') {
-        navigate('/pos');
-      } else if (res.user.role === 'customer') {
-        navigate('/orders');
-      } else {
-        navigate('/dashboard');
-      }
+      navigateUserToAuthorizedWorkspace(res.user);
     } catch (err) {
       setError(err.message || 'Quick login failed');
     } finally {
@@ -97,13 +102,7 @@ export default function LoginView({ onLoginSuccess }) {
         onLoginSuccess(res.user);
 
         // Redirect strictly to the exact right account that belongs to this user:
-        if (res.user.role === 'cashier') {
-          navigate('/pos');
-        } else if (res.user.role === 'customer') {
-          navigate('/orders');
-        } else {
-          navigate('/dashboard');
-        }
+        navigateUserToAuthorizedWorkspace(res.user);
       } else {
         // Register
         const payload = {
@@ -121,13 +120,7 @@ export default function LoginView({ onLoginSuccess }) {
         }
         onLoginSuccess(res.user);
 
-        if (res.user.role === 'cashier') {
-          navigate('/pos');
-        } else if (res.user.role === 'customer') {
-          navigate('/orders');
-        } else {
-          navigate('/dashboard');
-        }
+        navigateUserToAuthorizedWorkspace(res.user);
       }
     } catch (err) {
       setError(err.message || 'Authentication failed. Please verify credentials.');

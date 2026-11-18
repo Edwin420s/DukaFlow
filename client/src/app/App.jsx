@@ -163,8 +163,25 @@ export default function App() {
   const isRoot = location.pathname === '/';
   const isLoginOrRegister = location.pathname === '/login' || location.pathname === '/register';
 
-  // 1. Customer Storefront
+  // 1. Customer Storefront (Requires Customer Authentication)
   if (isStorefront) {
+    if (!currentUser) {
+      if (authChecked) {
+        return (
+          <Navigate
+            to="/login?role=customer&redirect=/storefront"
+            replace
+            state={{ from: location, message: 'Please sign in to access the customer store.' }}
+          />
+        );
+      }
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '1rem', color: '#64748b' }}>
+          <div style={{ width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTopColor: '#059669', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <p>Verifying authentication...</p>
+        </div>
+      );
+    }
     return (
       <Storefront
         currentUser={currentUser}
@@ -200,19 +217,21 @@ export default function App() {
         />
       );
     }
-    // Logged in: navigate straight to workspace
+    // Logged in: navigate straight to authorized workspace
     if (currentUser.role === 'cashier') return <Navigate to="/pos" replace />;
-    if (currentUser.role === 'customer') return <Navigate to="/orders" replace />;
+    if (currentUser.role === 'customer') return <Navigate to="/storefront" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 
   // 4. Login or Registration View
   if (isLoginOrRegister) {
     if (currentUser) {
-      // If already logged in, redirect to user's home
+      const redirectParam = new URLSearchParams(location.search).get('redirect');
       if (currentUser.role === 'cashier') return <Navigate to="/pos" replace />;
-      if (currentUser.role === 'customer') return <Navigate to="/orders" replace />;
-      return <Navigate to="/dashboard" replace />;
+      if (currentUser.role === 'customer') {
+        return <Navigate to={redirectParam && redirectParam.startsWith('/storefront') ? redirectParam : '/storefront'} replace />;
+      }
+      return <Navigate to={redirectParam && !redirectParam.startsWith('/pos') && !redirectParam.startsWith('/login') ? redirectParam : '/dashboard'} replace />;
     }
     return (
       <LoginView

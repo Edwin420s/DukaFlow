@@ -1055,7 +1055,8 @@ code, pre {
   gap: 12px;
 }
 
-.sf-btn-track {
+.sf-btn-track,
+.sf-btn-account {
   background: none;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -1067,6 +1068,13 @@ code, pre {
   display: flex;
   align-items: center;
   gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.sf-btn-track:hover,
+.sf-btn-account:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .sf-btn-cart {

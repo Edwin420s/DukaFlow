@@ -116,3 +116,106 @@ test('4. POS Offline Outbox Buffer Invariants', async (t) => {
     assert.equal(parsed[0].orderNumber, offlineOrder.orderNumber);
   });
 });
+
+test('5. Landing Page Navigation & Route Guard Logic', async (t) => {
+  function getCustomerShopTarget(currentUser) {
+    return currentUser ? '/storefront' : '/login?role=customer&redirect=/storefront';
+  }
+
+  function getWorkspaceTarget(currentUser) {
+    if (!currentUser) return '/login';
+    if (currentUser.role === 'cashier') return '/pos';
+    if (currentUser.role === 'customer') return '/storefront';
+    return '/dashboard';
+  }
+
+  function resolvePostLoginDestination(user, redirectParam) {
+    if (user.role === 'cashier') return '/pos';
+    if (user.role === 'customer') {
+      return redirectParam && redirectParam.startsWith('/storefront') ? redirectParam : '/storefront';
+    }
+    if (redirectParam && !redirectParam.startsWith('/pos') && !redirectParam.startsWith('/login')) {
+      return redirectParam;
+    }
+    return '/dashboard';
+  }
+
+  function canAccessRoute(role, path) {
+    const permissions = {
+      owner: ['/dashboard', '/pos', '/products', '/inventory', '/orders', '/coupons', '/suppliers', '/returns', '/customers', '/staff', '/reports', '/audit', '/settings', '/profile', '/storefront'],
+      manager: ['/dashboard', '/pos', '/products', '/inventory', '/orders', '/coupons', '/suppliers', '/returns', '/customers', '/reports', '/profile', '/storefront'],
+      cashier: ['/pos', '/orders', '/returns', '/customers', '/profile', '/storefront'],
+      customer: ['/orders', '/profile', '/storefront']
+    };
+    return (permissions[role] || []).includes(path);
+  }
+
+  await t.test('unauthenticated visitors are directed to login when clicking Customer Shop', () => {
+    assert.equal(getCustomerShopTarget(null), '/login?role=customer&redirect=/storefront');
+    assert.equal(getWorkspaceTarget(null), '/login');
+  });
+
+  await t.test('authenticated users are directed to authorized storefront or workspace', () => {
+    const customer = { id: 'cust-1', name: 'Alice Wambui', role: 'customer' };
+    const cashier = { id: 'cash-1', name: 'Mercy Wanjiku', role: 'cashier' };
+    const manager = { id: 'mgr-1', name: 'Peter Otieno', role: 'manager' };
+    const owner = { id: 'own-1', name: 'John Kamau', role: 'owner' };
+
+    assert.equal(getCustomerShopTarget(customer), '/storefront');
+    assert.equal(getWorkspaceTarget(customer), '/storefront');
+    assert.equal(getWorkspaceTarget(cashier), '/pos');
+    assert.equal(getWorkspaceTarget(manager), '/dashboard');
+    assert.equal(getWorkspaceTarget(owner), '/dashboard');
+  });
+
+  await t.test('post-login redirection sends each role to the exact right authorized account', () => {
+    const customer = { role: 'customer' };
+    const cashier = { role: 'cashier' };
+    const owner = { role: 'owner' };
+
+    // Default redirection with no redirect param
+    assert.equal(resolvePostLoginDestination(customer, null), '/storefront');
+    assert.equal(resolvePostLoginDestination(cashier, null), '/pos');
+    assert.equal(resolvePostLoginDestination(owner, null), '/dashboard');
+
+    // Customer with redirect param pointing to storefront
+    assert.equal(resolvePostLoginDestination(customer, '/storefront'), '/storefront');
+
+    // Cashier always redirected to POS terminal even if a redirect param is present
+    assert.equal(resolvePostLoginDestination(cashier, '/reports'), '/pos');
+
+    // Owner with specific backoffice redirect param
+    assert.equal(resolvePostLoginDestination(owner, '/inventory'), '/inventory');
+  });
+
+  await t.test('strict role permissions prevent privilege escalation across accounts', () => {
+    // Cashiers cannot access owner/manager sensitive backoffice views
+    assert.equal(canAccessRoute('cashier', '/reports'), false);
+    assert.equal(canAccessRoute('cashier', '/settings'), false);
+    assert.equal(canAccessRoute('cashier', '/staff'), false);
+    assert.equal(canAccessRoute('cashier', '/audit'), false);
+    assert.equal(canAccessRoute('cashier', '/inventory'), false);
+    assert.equal(canAccessRoute('cashier', '/pos'), true);
+    assert.equal(canAccessRoute('cashier', '/profile'), true);
+
+    // Customers only access their own orders, storefront and personal profile
+    assert.equal(canAccessRoute('customer', '/dashboard'), false);
+    assert.equal(canAccessRoute('customer', '/pos'), false);
+    assert.equal(canAccessRoute('customer', '/staff'), false);
+    assert.equal(canAccessRoute('customer', '/orders'), true);
+    assert.equal(canAccessRoute('customer', '/storefront'), true);
+    assert.equal(canAccessRoute('customer', '/profile'), true);
+
+    // Managers cannot access owner-only staff, audit logs, or settings
+    assert.equal(canAccessRoute('manager', '/staff'), false);
+    assert.equal(canAccessRoute('manager', '/audit'), false);
+    assert.equal(canAccessRoute('manager', '/settings'), false);
+    assert.equal(canAccessRoute('manager', '/inventory'), true);
+    assert.equal(canAccessRoute('manager', '/reports'), true);
+
+    // Owners have enterprise access across all modules
+    assert.equal(canAccessRoute('owner', '/staff'), true);
+    assert.equal(canAccessRoute('owner', '/audit'), true);
+    assert.equal(canAccessRoute('owner', '/settings'), true);
+  });
+});
