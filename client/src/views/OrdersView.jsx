@@ -3,7 +3,8 @@ import { api } from '../api.js';
 import { formatKes, formatDate } from '../utils/format.js';
 import { Search, Eye, CheckCircle2, Clock, Truck, XCircle, Printer, X } from 'lucide-react';
 
-export default function OrdersView() {
+export default function OrdersView({ currentUser }) {
+  const isCustomer = currentUser?.role === 'customer';
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -64,8 +65,12 @@ export default function OrdersView() {
     <div className="admin-page">
       <div className="admin-header">
         <div>
-          <h1>Customer Orders & Fulfilment</h1>
-          <p className="muted">Track orders across the entire lifecycle from checkout, preparation, dispatch to completion.</p>
+          <h1>{isCustomer ? 'My Orders & Purchases' : 'Customer Orders & Fulfilment'}</h1>
+          <p className="muted">
+            {isCustomer
+              ? 'View your past order history, live fulfillment tracking, and payment receipts.'
+              : 'Track orders across the entire lifecycle from checkout, preparation, dispatch to completion.'}
+          </p>
         </div>
       </div>
 
@@ -172,63 +177,65 @@ export default function OrdersView() {
             {actionError && <div className="sf-alert danger">{actionError}</div>}
 
             <div className="order-drawer-content">
-              {/* Lifecycle Actions Bar */}
-              <div className="order-actions-card">
-                <h4>Workflow Status Actions</h4>
-                <div className="status-button-row">
-                  {selectedOrder.orderStatus === 'pending' && (
-                    <button
-                      className="primary-button small"
-                      disabled={updating}
-                      onClick={() => handleStatusTransition(selectedOrder._id, 'confirmed', 'Confirmed by staff')}
-                    >
-                      ✓ Confirm Order
-                    </button>
-                  )}
-                  {selectedOrder.orderStatus === 'confirmed' && (
-                    <button
-                      className="primary-button small"
-                      disabled={updating}
-                      onClick={() => handleStatusTransition(selectedOrder._id, 'preparing', 'Started picking and packing')}
-                    >
-                      📦 Start Preparing
-                    </button>
-                  )}
-                  {selectedOrder.orderStatus === 'preparing' && (
-                    <button
-                      className="primary-button small"
-                      disabled={updating}
-                      onClick={() =>
-                        handleStatusTransition(
-                          selectedOrder._id,
-                          selectedOrder.fulfilmentType === 'delivery' ? 'dispatched' : 'ready_for_pickup',
-                          'Items assembled in bag'
-                        )
-                      }
-                    >
-                      {selectedOrder.fulfilmentType === 'delivery' ? '🚚 Dispatch Rider' : '✓ Ready for Collection'}
-                    </button>
-                  )}
-                  {(selectedOrder.orderStatus === 'ready_for_pickup' || selectedOrder.orderStatus === 'dispatched') && (
-                    <button
-                      className="primary-button small bg-emerald"
-                      disabled={updating}
-                      onClick={() => handleStatusTransition(selectedOrder._id, 'completed', 'Handed over to customer')}
-                    >
-                      ✓ Mark Completed
-                    </button>
-                  )}
-                  {selectedOrder.orderStatus !== 'completed' && selectedOrder.orderStatus !== 'cancelled' && (
-                    <button
-                      className="outline-button small text-danger"
-                      disabled={updating}
-                      onClick={() => handleCancelOrder(selectedOrder._id)}
-                    >
-                      <XCircle size={13} /> Cancel Order
-                    </button>
-                  )}
+              {/* Lifecycle Actions Bar (Staff Only) */}
+              {!isCustomer && (
+                <div className="order-actions-card">
+                  <h4>Workflow Status Actions</h4>
+                  <div className="status-button-row">
+                    {selectedOrder.orderStatus === 'pending' && (
+                      <button
+                        className="primary-button small"
+                        disabled={updating}
+                        onClick={() => handleStatusTransition(selectedOrder._id, 'confirmed', 'Confirmed by staff')}
+                      >
+                        ✓ Confirm Order
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus === 'confirmed' && (
+                      <button
+                        className="primary-button small"
+                        disabled={updating}
+                        onClick={() => handleStatusTransition(selectedOrder._id, 'preparing', 'Started picking and packing')}
+                      >
+                        📦 Start Preparing
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus === 'preparing' && (
+                      <button
+                        className="primary-button small"
+                        disabled={updating}
+                        onClick={() =>
+                          handleStatusTransition(
+                            selectedOrder._id,
+                            selectedOrder.fulfilmentType === 'delivery' ? 'dispatched' : 'ready_for_pickup',
+                            'Items assembled in bag'
+                          )
+                        }
+                      >
+                        {selectedOrder.fulfilmentType === 'delivery' ? '🚚 Dispatch Rider' : '✓ Ready for Collection'}
+                      </button>
+                    )}
+                    {(selectedOrder.orderStatus === 'ready_for_pickup' || selectedOrder.orderStatus === 'dispatched') && (
+                      <button
+                        className="primary-button small bg-emerald"
+                        disabled={updating}
+                        onClick={() => handleStatusTransition(selectedOrder._id, 'completed', 'Handed over to customer')}
+                      >
+                        ✓ Mark Completed
+                      </button>
+                    )}
+                    {selectedOrder.orderStatus !== 'completed' && selectedOrder.orderStatus !== 'cancelled' && (
+                      <button
+                        className="outline-button small text-danger"
+                        disabled={updating}
+                        onClick={() => handleCancelOrder(selectedOrder._id)}
+                      >
+                        <XCircle size={13} /> Cancel Order
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Customer Info Card */}
               <div className="detail-card">

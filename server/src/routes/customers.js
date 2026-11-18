@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Customer } from '../models/Customer.js';
 import { Order } from '../models/Order.js';
 import { requireAuth } from '../middleware/auth.js';
+import { requireRole } from '../middleware/rbac.js';
 import { validateBody } from '../middleware/validate.js';
 import { AppError } from '../shared/errors.js';
 
@@ -16,7 +17,7 @@ const customerSchema = z.object({
   notes: z.string().optional().default('')
 });
 
-customersRouter.get('/', requireAuth, async (req, res, next) => {
+customersRouter.get('/', requireAuth, requireRole('owner', 'manager', 'cashier'), async (req, res, next) => {
   try {
     const { search } = req.query;
     const filter = {};

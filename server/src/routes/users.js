@@ -27,9 +27,16 @@ const updateStaffSchema = z.object({
   status: z.enum(['active', 'suspended', 'inactive']).optional()
 });
 
-usersRouter.get('/', requireAuth, requireRole('owner', 'manager'), async (_req, res, next) => {
+usersRouter.get('/', requireAuth, requireRole('owner', 'manager'), async (req, res, next) => {
   try {
-    const users = await User.find({ role: { $ne: 'customer' } })
+    const filter = { role: { $ne: 'customer' } };
+    if (req.user.shopId) {
+      filter.$or = [
+        { shopId: req.user.shopId },
+        { shopId: { $exists: false } }
+      ];
+    }
+    const users = await User.find(filter)
       .select('-passwordHash')
       .sort({ createdAt: -1 });
     res.json({ users });
@@ -54,6 +61,7 @@ usersRouter.post('/', requireAuth, requireRole('owner'), validateBody(createStaf
       passwordHash,
       role,
       permissions,
+      shopId: req.user.shopId || null,
       status: 'active'
     });
 

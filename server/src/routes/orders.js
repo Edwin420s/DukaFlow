@@ -55,15 +55,37 @@ ordersRouter.get('/', requireAuth, async (req, res, next) => {
     const { status, paymentStatus, search, limit = 50 } = req.query;
     const filter = {};
 
+    // Strict account isolation: Customers only see their own orders
+    if (req.user.role === 'customer') {
+      filter.$and = [
+        {
+          $or: [
+            { customerId: req.user._id },
+            { customerEmail: req.user.email }
+          ]
+        }
+      ];
+    } else if (req.user.shopId) {
+      filter.$or = [
+        { shopId: req.user.shopId },
+        { shopId: { $exists: false } }
+      ];
+    }
+
     if (status) filter.orderStatus = status;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (search) {
       const regex = new RegExp(search, 'i');
-      filter.$or = [
+      const searchConditions = [
         { orderNumber: regex },
         { customerName: regex },
         { customerPhone: regex }
       ];
+      if (filter.$and) {
+        filter.$and.push({ $or: searchConditions });
+      } else {
+        filter.$or = searchConditions;
+      }
     }
 
     const orders = await Order.find(filter)
@@ -85,6 +107,17 @@ ordersRouter.get('/:id', optionalAuth, async (req, res, next) => {
       order = await Order.findById(req.params.id).populate('paymentId');
     }
     if (!order) throw new AppError('Order not found', 404, 'NOT_FOUND');
+
+    // Strict account isolation: Ensure customer can only view their own order
+    if (req.user && req.user.role === 'customer') {
+      const isOwner =
+        (order.customerId && order.customerId.toString() === req.user._id.toString()) ||
+        (order.customerEmail && order.customerEmail.toLowerCase() === req.user.email.toLowerCase());
+      if (!isOwner) {
+        throw new AppError('You do not have permission to view this order', 403, 'FORBIDDEN');
+      }
+    }
+
     res.json({ order });
   } catch (err) {
     next(err);

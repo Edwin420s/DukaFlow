@@ -1,7 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { Shop } from '../models/Shop.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, optionalAuth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 import { validateBody } from '../middleware/validate.js';
 import { logAudit } from '../services/auditService.js';
@@ -55,9 +55,15 @@ const shopUpdateSchema = z.object({
     .optional()
 });
 
-shopRouter.get('/', async (_req, res, next) => {
+shopRouter.get('/', optionalAuth, async (req, res, next) => {
   try {
-    let shop = await Shop.findOne();
+    let shop = null;
+    if (req.user?.shopId) {
+      shop = await Shop.findById(req.user.shopId);
+    }
+    if (!shop) {
+      shop = await Shop.findOne();
+    }
     if (!shop) {
       shop = await Shop.create({});
     }
@@ -69,7 +75,13 @@ shopRouter.get('/', async (_req, res, next) => {
 
 shopRouter.put('/', requireAuth, requireRole('owner', 'manager'), validateBody(shopUpdateSchema), async (req, res, next) => {
   try {
-    let shop = await Shop.findOne();
+    let shop = null;
+    if (req.user?.shopId) {
+      shop = await Shop.findById(req.user.shopId);
+    }
+    if (!shop) {
+      shop = await Shop.findOne();
+    }
     if (!shop) {
       shop = new Shop();
     }

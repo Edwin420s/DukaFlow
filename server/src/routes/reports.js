@@ -11,7 +11,7 @@ import { requireRole } from '../middleware/rbac.js';
 
 export const reportsRouter = express.Router();
 
-reportsRouter.get('/dashboard', requireAuth, async (_req, res, next) => {
+reportsRouter.get('/dashboard', requireAuth, requireRole('owner', 'manager'), async (_req, res, next) => {
   try {
     const data = await getDashboardMetrics();
     res.json(data);
@@ -20,7 +20,7 @@ reportsRouter.get('/dashboard', requireAuth, async (_req, res, next) => {
   }
 });
 
-reportsRouter.get('/sales', requireAuth, async (req, res, next) => {
+reportsRouter.get('/sales', requireAuth, requireRole('owner', 'manager'), async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     const report = await getSalesReport({ startDate, endDate });

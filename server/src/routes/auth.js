@@ -1,6 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
 import { User } from '../models/User.js';
+import { Shop } from '../models/Shop.js';
 import { hashPassword, comparePassword, generateAccessToken, generateRefreshToken } from '../services/authService.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
@@ -14,7 +15,8 @@ const registerSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional().default(''),
   password: z.string().min(6),
-  role: z.enum(['owner', 'manager', 'cashier', 'inventory', 'fulfilment', 'customer']).optional().default('customer')
+  role: z.enum(['owner', 'manager', 'cashier', 'inventory', 'fulfilment', 'customer']).optional().default('customer'),
+  shopName: z.string().optional()
 });
 
 const loginSchema = z.object({
@@ -24,10 +26,26 @@ const loginSchema = z.object({
 
 authRouter.post('/register', validateBody(registerSchema), async (req, res, next) => {
   try {
-    const { name, email, phone, password, role } = req.body;
+    const { name, email, phone, password, role, shopName } = req.body;
     const existing = await User.findOne({ email });
     if (existing) {
       throw new AppError('An account with this email already exists', 409, 'EMAIL_EXISTS');
+    }
+
+    let shopId = null;
+    if (role === 'owner' || shopName) {
+      const sanitizedName = shopName?.trim() || `${name}'s Duka`;
+      const slug = sanitizedName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + `-${Date.now().toString().slice(-4)}`;
+      const newShop = await Shop.create({
+        name: sanitizedName,
+        slug,
+        email: email,
+        phone: phone || '+254 700 000 000'
+      });
+      shopId = newShop._id;
+    } else {
+      const defaultShop = await Shop.findOne();
+      if (defaultShop) shopId = defaultShop._id;
     }
 
     const passwordHash = await hashPassword(password);
@@ -37,6 +55,7 @@ authRouter.post('/register', validateBody(registerSchema), async (req, res, next
       phone,
       passwordHash,
       role,
+      shopId,
       status: 'active'
     });
 
@@ -53,7 +72,7 @@ authRouter.post('/register', validateBody(registerSchema), async (req, res, next
       action: 'user.registered',
       entityType: 'User',
       entityId: user._id,
-      after: { email, role }
+      after: { email, role, shopId }
     });
 
     res.status(201).json({
@@ -63,6 +82,7 @@ authRouter.post('/register', validateBody(registerSchema), async (req, res, next
         email: user.email,
         phone: user.phone,
         role: user.role,
+        shopId: user.shopId,
         permissions: user.permissions
       },
       accessToken
@@ -115,6 +135,7 @@ authRouter.post('/login', validateBody(loginSchema), async (req, res, next) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        shopId: user.shopId,
         permissions: user.permissions
       },
       accessToken
@@ -137,6 +158,7 @@ authRouter.get('/me', requireAuth, (req, res) => {
       email: req.user.email,
       phone: req.user.phone,
       role: req.user.role,
+      shopId: req.user.shopId,
       permissions: req.user.permissions,
       lastLoginAt: req.user.lastLoginAt
     }

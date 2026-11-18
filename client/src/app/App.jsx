@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { api } from '../api.js';
+import LandingView from '../views/LandingView.jsx';
+import LoginView from '../views/LoginView.jsx';
 import Storefront from '../views/Storefront.jsx';
 import DashboardView from '../views/DashboardView.jsx';
 import POS from '../views/POS.jsx';
@@ -37,23 +39,26 @@ import {
   Check,
   Tag,
   Menu,
-  X
+  X,
+  Lock,
+  ArrowRight,
+  Globe
 } from 'lucide-react';
 
-const navItems = [
-  ['Overview', '/', BarChart3],
-  ['Point of Sale', '/pos', ShoppingBag],
-  ['Products', '/products', Package],
-  ['Inventory', '/inventory', Boxes],
-  ['Orders', '/orders', ClipboardList],
-  ['Coupons', '/coupons', Tag],
-  ['Suppliers', '/suppliers', Truck],
-  ['Returns', '/returns', RotateCcw],
-  ['Customers', '/customers', Users],
-  ['Staff', '/staff', UserCheck],
-  ['Reports', '/reports', Activity],
-  ['Audit Logs', '/audit', ShieldAlert],
-  ['Settings', '/settings', Settings]
+const allNavItems = [
+  { label: 'Overview', path: '/dashboard', icon: BarChart3, roles: ['owner', 'manager'] },
+  { label: 'Point of Sale', path: '/pos', icon: ShoppingBag, roles: ['owner', 'manager', 'cashier'] },
+  { label: 'Products', path: '/products', icon: Package, roles: ['owner', 'manager'] },
+  { label: 'Inventory', path: '/inventory', icon: Boxes, roles: ['owner', 'manager'] },
+  { label: 'Orders', path: '/orders', icon: ClipboardList, roles: ['owner', 'manager', 'cashier', 'customer'] },
+  { label: 'Coupons', path: '/coupons', icon: Tag, roles: ['owner', 'manager'] },
+  { label: 'Suppliers', path: '/suppliers', icon: Truck, roles: ['owner', 'manager'] },
+  { label: 'Returns', path: '/returns', icon: RotateCcw, roles: ['owner', 'manager', 'cashier'] },
+  { label: 'Customers', path: '/customers', icon: Users, roles: ['owner', 'manager', 'cashier'] },
+  { label: 'Staff', path: '/staff', icon: UserCheck, roles: ['owner'] },
+  { label: 'Reports', path: '/reports', icon: Activity, roles: ['owner', 'manager'] },
+  { label: 'Audit Logs', path: '/audit', icon: ShieldAlert, roles: ['owner'] },
+  { label: 'Settings', path: '/settings', icon: Settings, roles: ['owner'] }
 ];
 
 export default function App() {
@@ -61,12 +66,12 @@ export default function App() {
   const navigate = useNavigate();
 
   const [currentUser, setCurrentUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [shop, setShop] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Close mobile sidebar on route change
@@ -74,14 +79,7 @@ export default function App() {
     setIsMobileNavOpen(false);
   }, [location.pathname]);
 
-  // Auth form
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-
-  // Mode: if user navigated to `/storefront`, show customer experience
-  const isStorefront = location.pathname.startsWith('/storefront');
-
+  // Online / Offline listeners
   useEffect(() => {
     function handleOnline() { setIsOnline(true); }
     function handleOffline() { setIsOnline(false); }
@@ -93,6 +91,7 @@ export default function App() {
     };
   }, []);
 
+  // Check initial authentication
   useEffect(() => {
     checkCurrentUser();
     loadShop();
@@ -101,15 +100,24 @@ export default function App() {
   useEffect(() => {
     if (currentUser) {
       loadNotifications();
+    } else {
+      setNotifications([]);
+      setUnreadCount(0);
     }
   }, [currentUser]);
 
   async function checkCurrentUser() {
     try {
       const res = await api.getMe();
-      if (res?.user) setCurrentUser(res.user);
+      if (res?.user) {
+        setCurrentUser(res.user);
+      } else {
+        setCurrentUser(null);
+      }
     } catch {
-      quickLogin('owner@dukaflow.co.ke', 'DukaFlow2026!');
+      setCurrentUser(null);
+    } finally {
+      setAuthChecked(true);
     }
   }
 
@@ -130,21 +138,6 @@ export default function App() {
     } catch {}
   }
 
-  async function handleLogin(e) {
-    e.preventDefault();
-    setLoginError('');
-    try {
-      const res = await api.login(loginEmail, loginPassword);
-      if (res?.accessToken) {
-        localStorage.setItem('dukaflow_token', res.accessToken);
-      }
-      setCurrentUser(res.user);
-      setIsAuthModalOpen(false);
-    } catch (err) {
-      setLoginError(err.message || 'Login failed');
-    }
-  }
-
   async function quickLogin(email, password) {
     try {
       const res = await api.login(email, password);
@@ -152,7 +145,18 @@ export default function App() {
         localStorage.setItem('dukaflow_token', res.accessToken);
       }
       setCurrentUser(res.user);
-    } catch {}
+      loadShop();
+
+      if (res.user.role === 'cashier') {
+        navigate('/pos');
+      } else if (res.user.role === 'customer') {
+        navigate('/orders');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Quick login failed:', err);
+    }
   }
 
   async function handleLogout() {
@@ -161,6 +165,7 @@ export default function App() {
     } catch {}
     localStorage.removeItem('dukaflow_token');
     setCurrentUser(null);
+    navigate('/');
   }
 
   async function markAllNotificationsRead() {
@@ -170,9 +175,69 @@ export default function App() {
     } catch {}
   }
 
+  // Route modes:
+  const isStorefront = location.pathname.startsWith('/storefront');
+  const isLanding = location.pathname === '/' || location.pathname === '/landing';
+  const isLoginOrRegister = location.pathname === '/login' || location.pathname === '/register';
+
+  // 1. Customer Storefront
   if (isStorefront) {
-    return <Storefront onSwitchToPortal={() => navigate('/')} />;
+    return (
+      <Storefront
+        currentUser={currentUser}
+        onSwitchToPortal={() => {
+          if (!currentUser) navigate('/login');
+          else if (currentUser.role === 'cashier') navigate('/pos');
+          else if (currentUser.role === 'customer') navigate('/orders');
+          else navigate('/dashboard');
+        }}
+      />
+    );
   }
+
+  // 2. Landing Page (Public showcase of product)
+  if (isLanding) {
+    return (
+      <LandingView
+        currentUser={currentUser}
+        onLoginClick={() => navigate('/login')}
+      />
+    );
+  }
+
+  // 3. Login or Registration View
+  if (isLoginOrRegister) {
+    if (currentUser) {
+      // If already logged in, redirect to user's home
+      if (currentUser.role === 'cashier') return <Navigate to="/pos" replace />;
+      if (currentUser.role === 'customer') return <Navigate to="/orders" replace />;
+      return <Navigate to="/dashboard" replace />;
+    }
+    return (
+      <LoginView
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          loadShop();
+        }}
+      />
+    );
+  }
+
+  // 4. Route Guard for Protected Backoffice/Staff/Customer Workspace:
+  // If user is NOT logged in and attempting to access an internal page, redirect to Login
+  if (!currentUser && authChecked) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location, message: 'Please sign in to access this workspace.' }}
+      />
+    );
+  }
+
+  // Filter navigation items by role
+  const userRole = currentUser?.role || 'customer';
+  const visibleNavItems = allNavItems.filter((item) => item.roles.includes(userRole));
 
   return (
     <div className="shell">
@@ -181,7 +246,7 @@ export default function App() {
         <div className="sidebar-backdrop" onClick={() => setIsMobileNavOpen(false)} />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <aside className={`sidebar ${isMobileNavOpen ? 'open' : ''}`}>
         <div className="sidebar-top-row">
           <Link className="brand" to="/" onClick={() => setIsMobileNavOpen(false)}>
@@ -209,17 +274,21 @@ export default function App() {
           <span className="external-arrow">↗</span>
         </button>
 
+        {/* Shop & Tenant Profile Card */}
         <div className="shop-switch">
-          <span className="shop-avatar">DF</span>
+          <span className="shop-avatar">{shop?.name?.slice(0, 2).toUpperCase() || 'DF'}</span>
           <div>
             <b>{shop?.name || 'DukaFlow Store'}</b>
-            <small>Single branch · Nairobi</small>
+            <small>{currentUser?.shopId ? 'Independent Tenant' : 'Single branch'} · Nairobi</small>
           </div>
         </div>
 
-        <p className="nav-label">ENTERPRISE WORKSPACE</p>
+        <p className="nav-label">
+          {userRole === 'customer' ? 'CUSTOMER ACCOUNT' : userRole === 'cashier' ? 'CASHIER TERMINAL' : 'ENTERPRISE WORKSPACE'}
+        </p>
+
         <nav>
-          {navItems.map(([label, path, Icon]) => {
+          {visibleNavItems.map(({ label, path, icon: Icon }) => {
             const isActive = location.pathname === path;
             return (
               <Link
@@ -234,174 +303,297 @@ export default function App() {
           })}
         </nav>
 
+        {/* Sidebar Footer with Active User Profile */}
         <div className="sidebar-bottom">
-          {currentUser ? (
-            <div className="profile">
-              <div className="profile-avatar">{currentUser.name.slice(0, 2).toUpperCase()}</div>
-              <div>
-                <b>{currentUser.name}</b>
-                <small>{currentUser.role.toUpperCase()}</small>
-              </div>
-              <button className="icon-btn ml-auto" onClick={handleLogout} title="Log Out">
-                <LogOut size={15} />
-              </button>
+          <div className="profile">
+            <div className={`profile-avatar role-${userRole}`}>
+              {currentUser?.name?.slice(0, 2).toUpperCase() || 'US'}
             </div>
-          ) : (
-            <button className="primary-button full-width" onClick={() => setIsAuthModalOpen(true)}>
-              Staff Login
+            <div>
+              <b>{currentUser?.name || 'User'}</b>
+              <small className={`role-tag role-${userRole}`}>
+                {userRole.toUpperCase()}
+              </small>
+            </div>
+            <button className="icon-btn ml-auto" onClick={handleLogout} title="Log Out">
+              <LogOut size={15} />
             </button>
-          )}
+          </div>
+
+          <div className="sidebar-public-links mt-2">
+            <Link to="/" className="text-xs text-muted d-flex items-center gap-1">
+              <Globe size={12} />
+              <span>Product Landing Page</span>
+            </Link>
+          </div>
         </div>
       </aside>
 
       {/* Main Backoffice Workspace */}
-      <main className="main">
+      <main className="main-content">
+        {/* Top Header Bar */}
         <header className="topbar">
           <div className="topbar-left">
             <button
               type="button"
               className="mobile-hamburger-btn"
               onClick={() => setIsMobileNavOpen(true)}
-              aria-label="Open sidebar menu"
+              aria-label="Toggle navigation menu"
             >
               <Menu size={20} />
             </button>
-            <span className="breadcrumb">
-              DukaFlow Retail <span>/</span> {navItems.find((n) => n[1] === location.pathname)?.[0] || 'Workspace'}
+
+            <span className="page-title">
+              {allNavItems.find((i) => i.path === location.pathname)?.label || 'Workspace'}
+            </span>
+
+            {/* Offline / Online Network Indicator */}
+            <span className={`network-status-badge ${isOnline ? 'online' : 'offline'}`}>
+              {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
+              <span>{isOnline ? 'Cloud Synced' : 'Offline Buffer'}</span>
+            </span>
+
+            <span className={`tenant-isolation-pill role-${userRole}`}>
+              <Lock size={11} />
+              <span>Isolated Account · {userRole.toUpperCase()}</span>
             </span>
           </div>
 
           <div className="topbar-right">
-            {/* Online / Offline Status */}
-            <span className={`online-indicator ${isOnline ? 'online' : 'offline'}`}>
-              <i /> {isOnline ? 'Online Authority' : 'Offline Safe Mode'}
-            </span>
+            {/* Notification Bell (for staff) */}
+            {userRole !== 'customer' && (
+              <div className="notif-wrapper">
+                <button
+                  className="icon-btn relative"
+                  onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  title="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+                </button>
 
-            {/* Notifications Popover */}
-            <div className="notif-wrapper">
-              <button
-                className="icon-button relative"
-                onClick={() => setIsNotifOpen(!isNotifOpen)}
-                aria-label="Notifications"
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-              </button>
-
-              {isNotifOpen && (
-                <div className="notif-popover">
-                  <div className="notif-header">
-                    <h4>Notifications</h4>
-                    {unreadCount > 0 && (
-                      <button className="btn-link text-xs" onClick={markAllNotificationsRead}>
-                        Mark all read
-                      </button>
-                    )}
+                {isNotifOpen && (
+                  <div className="notif-dropdown">
+                    <div className="notif-header">
+                      <b>Activity Alerts</b>
+                      {unreadCount > 0 && (
+                        <button className="text-btn" onClick={markAllNotificationsRead}>
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="notif-list">
+                      {notifications.length === 0 ? (
+                        <p className="p-3 text-muted text-center">No alerts recorded.</p>
+                      ) : (
+                        notifications.map((n) => (
+                          <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
+                            <b>{n.title}</b>
+                            <p>{n.message}</p>
+                            <small>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                  <div className="notif-list">
-                    {notifications.length === 0 ? (
-                      <p className="p-3 text-muted text-center">No alerts recorded.</p>
-                    ) : (
-                      notifications.map((n) => (
-                        <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
-                          <b>{n.title}</b>
-                          <p>{n.message}</p>
-                          <small>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
-            {/* Demo Role Switcher */}
+            {/* Role Demo Switcher */}
             <div className="role-switcher">
               <span className="text-xs text-muted">Role:</span>
               <button
-                className={`role-pill ${currentUser?.role === 'owner' ? 'active' : ''}`}
+                className={`role-pill ${userRole === 'owner' ? 'active' : ''}`}
                 onClick={() => quickLogin('owner@dukaflow.co.ke', 'DukaFlow2026!')}
+                title="Switch to Owner account"
               >
                 Owner
               </button>
               <button
-                className={`role-pill ${currentUser?.role === 'manager' ? 'active' : ''}`}
+                className={`role-pill ${userRole === 'manager' ? 'active' : ''}`}
                 onClick={() => quickLogin('manager@dukaflow.co.ke', 'DukaFlow2026!')}
+                title="Switch to Manager account"
               >
                 Manager
               </button>
               <button
-                className={`role-pill ${currentUser?.role === 'cashier' ? 'active' : ''}`}
+                className={`role-pill ${userRole === 'cashier' ? 'active' : ''}`}
                 onClick={() => quickLogin('cashier@dukaflow.co.ke', 'DukaFlow2026!')}
+                title="Switch to Cashier account"
               >
                 Cashier
+              </button>
+              <button
+                className={`role-pill ${userRole === 'customer' ? 'active' : ''}`}
+                onClick={() => quickLogin('customer@dukaflow.co.ke', 'DukaFlow2026!')}
+                title="Switch to Customer account"
+              >
+                Customer
               </button>
             </div>
           </div>
         </header>
 
-        {/* Dynamic Route Pages */}
+        {/* Dynamic Protected Route Pages with Strict Role Guarding */}
         <Routes>
-          <Route path="/" element={<DashboardView onNavigate={(p) => navigate(p)} />} />
-          <Route path="/pos" element={<POS currentUser={currentUser} />} />
-          <Route path="/products" element={<ProductsView />} />
-          <Route path="/inventory" element={<InventoryView />} />
-          <Route path="/orders" element={<OrdersView />} />
-          <Route path="/coupons" element={<CouponsView />} />
-          <Route path="/suppliers" element={<SuppliersView />} />
-          <Route path="/returns" element={<ReturnsView />} />
-          <Route path="/customers" element={<CustomersView />} />
-          <Route path="/staff" element={<StaffView />} />
-          <Route path="/reports" element={<ReportsView />} />
-          <Route path="/audit" element={<AuditView />} />
-          <Route path="/settings" element={<SettingsView />} />
+          {/* Dashboard: Owner & Manager only */}
+          <Route
+            path="/dashboard"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <DashboardView onNavigate={(p) => navigate(p)} />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+
+          {/* POS: Cashier, Manager & Owner */}
+          <Route
+            path="/pos"
+            element={
+              ['owner', 'manager', 'cashier'].includes(userRole) ? (
+                <POS currentUser={currentUser} />
+              ) : (
+                <Navigate to="/orders" replace />
+              )
+            }
+          />
+
+          {/* Catalog & Inventory: Owner & Manager */}
+          <Route
+            path="/products"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <ProductsView />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <InventoryView />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+
+          {/* Orders: All authenticated users (scoped by role/customer) */}
+          <Route path="/orders" element={<OrdersView currentUser={currentUser} />} />
+
+          {/* Coupons & Promotions: Owner & Manager */}
+          <Route
+            path="/coupons"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <CouponsView />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+
+          {/* Supply Chain & Purchasing: Owner & Manager */}
+          <Route
+            path="/suppliers"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <SuppliersView />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+
+          {/* Returns: Owner, Manager & Cashier */}
+          <Route
+            path="/returns"
+            element={
+              ['owner', 'manager', 'cashier'].includes(userRole) ? (
+                <ReturnsView />
+              ) : (
+                <Navigate to="/orders" replace />
+              )
+            }
+          />
+
+          {/* Customers Directory: Staff only */}
+          <Route
+            path="/customers"
+            element={
+              ['owner', 'manager', 'cashier'].includes(userRole) ? (
+                <CustomersView />
+              ) : (
+                <Navigate to="/orders" replace />
+              )
+            }
+          />
+
+          {/* Staff Management: Owner only */}
+          <Route
+            path="/staff"
+            element={
+              userRole === 'owner' ? (
+                <StaffView />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+
+          {/* Reports & Financial Analytics: Owner & Manager only */}
+          <Route
+            path="/reports"
+            element={
+              ['owner', 'manager'].includes(userRole) ? (
+                <ReportsView />
+              ) : (
+                <Navigate to={userRole === 'cashier' ? '/pos' : '/orders'} replace />
+              )
+            }
+          />
+
+          {/* Audit Logs: Owner only */}
+          <Route
+            path="/audit"
+            element={
+              userRole === 'owner' ? (
+                <AuditView />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+
+          {/* Shop Settings: Owner only */}
+          <Route
+            path="/settings"
+            element={
+              userRole === 'owner' ? (
+                <SettingsView />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
+
+          {/* Fallback */}
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to={userRole === 'cashier' ? '/pos' : userRole === 'customer' ? '/orders' : '/dashboard'}
+                replace
+              />
+            }
+          />
         </Routes>
       </main>
-
-      {/* Staff Login Modal */}
-      {isAuthModalOpen && (
-        <div className="sf-modal-overlay" onClick={() => setIsAuthModalOpen(false)}>
-          <div className="sf-modal-card" onClick={(e) => e.stopPropagation()}>
-            <h2>Staff Portal Login</h2>
-            <p className="muted">Enter your shop credentials to access the management backoffice and POS.</p>
-            {loginError && <div className="sf-alert danger">{loginError}</div>}
-
-            <form onSubmit={handleLogin} className="admin-modal-form mt-3">
-              <label>
-                Email Address
-                <input
-                  type="email"
-                  required
-                  placeholder="name@dukaflow.co.ke"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                />
-              </label>
-
-              <label>
-                Password
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-              </label>
-
-              <div className="sf-modal-actions">
-                <button type="submit" className="primary-button">Sign In</button>
-                <button type="button" className="outline-button" onClick={() => setIsAuthModalOpen(false)}>Cancel</button>
-              </div>
-
-              <div className="demo-credentials-box mt-3">
-                <p className="text-xs text-muted">Demo Credentials:</p>
-                <code className="text-xs">owner@dukaflow.co.ke / DukaFlow2026!</code>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
