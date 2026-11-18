@@ -300,7 +300,12 @@ export default function Storefront({ onSwitchToPortal, currentUser, onLogout }) 
               : 'Staff Sign In →'}
           </button>
           {currentUser && onLogout && (
-            <button onClick={onLogout} className="sf-announcement-logout" title="Sign Out">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="sf-announcement-logout"
+              title="Sign Out"
+            >
               Sign Out
             </button>
           )}
@@ -361,6 +366,7 @@ export default function Storefront({ onSwitchToPortal, currentUser, onLogout }) 
 
             {currentUser && onLogout && (
               <button
+                type="button"
                 className="sf-btn-logout"
                 onClick={onLogout}
                 title="Sign Out of DukaFlow"

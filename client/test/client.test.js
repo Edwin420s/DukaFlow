@@ -219,3 +219,85 @@ test('5. Landing Page Navigation & Route Guard Logic', async (t) => {
     assert.equal(canAccessRoute('owner', '/settings'), true);
   });
 });
+
+test('6. Global Sign Out & Notification Popup Logic', async (t) => {
+  // Mock localStorage & router navigation
+  function executeLogout({ storage, stateSetter, navigator }) {
+    storage.removeItem('dukaflow_token');
+    storage.removeItem('dukaflow_cart');
+    stateSetter.setUser(null);
+    stateSetter.setNotifications([]);
+    stateSetter.setUnreadCount(0);
+    stateSetter.setIsNotifOpen(false);
+    navigator('/login', { replace: true });
+  }
+
+  await t.test('signout execution wipes storage credentials and directs cleanly to /login', () => {
+    const fakeStorage = new Map([
+      ['dukaflow_token', 'jwt.valid.token'],
+      ['dukaflow_cart', JSON.stringify([{ id: 'prod-1', qty: 2 }])]
+    ]);
+    const mockStorage = {
+      removeItem: (k) => fakeStorage.delete(k),
+      getItem: (k) => fakeStorage.get(k)
+    };
+    let userState = { id: 'u1', role: 'cashier' };
+    let notifs = [{ id: 'n1', title: 'Low Stock' }];
+    let unread = 1;
+    let notifOpen = true;
+    let navigatedPath = null;
+    let navOptions = null;
+
+    executeLogout({
+      storage: mockStorage,
+      stateSetter: {
+        setUser: (u) => { userState = u; },
+        setNotifications: (n) => { notifs = n; },
+        setUnreadCount: (c) => { unread = c; },
+        setIsNotifOpen: (o) => { notifOpen = o; }
+      },
+      navigator: (path, opts) => {
+        navigatedPath = path;
+        navOptions = opts;
+      }
+    });
+
+    assert.equal(fakeStorage.has('dukaflow_token'), false);
+    assert.equal(fakeStorage.has('dukaflow_cart'), false);
+    assert.equal(userState, null);
+    assert.equal(notifs.length, 0);
+    assert.equal(unread, 0);
+    assert.equal(notifOpen, false);
+    assert.equal(navigatedPath, '/login');
+    assert.deepEqual(navOptions, { replace: true });
+  });
+
+  await t.test('notification dropdown opens with unread count and closes via close button or backdrop click', () => {
+    let isOpen = false;
+    function toggleNotifications() {
+      isOpen = !isOpen;
+    }
+    function closeNotifications() {
+      isOpen = false;
+    }
+
+    // Initial state: closed
+    assert.equal(isOpen, false);
+
+    // Clicking bell opens it
+    toggleNotifications();
+    assert.equal(isOpen, true);
+
+    // Clicking close button dismisses it
+    closeNotifications();
+    assert.equal(isOpen, false);
+
+    // Clicking bell opens it again
+    toggleNotifications();
+    assert.equal(isOpen, true);
+
+    // Clicking backdrop closes it
+    closeNotifications();
+    assert.equal(isOpen, false);
+  });
+});

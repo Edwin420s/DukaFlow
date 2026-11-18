@@ -142,15 +142,24 @@ export default function App() {
   }
 
   async function handleLogout() {
-    try {
-      await api.logout();
-    } catch {}
+    // 1. Immediately wipe local auth credentials and cart
     localStorage.removeItem('dukaflow_token');
     localStorage.removeItem('dukaflow_cart');
+
+    // 2. Clear state in memory so protected pages unmount immediately
     setNotifications([]);
     setUnreadCount(0);
+    setIsNotifOpen(false);
+    setIsMobileNavOpen(false);
     setCurrentUser(null);
-    navigate('/');
+
+    // 3. Fire-and-forget backend session cleanup (clear cookies)
+    try {
+      api.logout().catch(() => {});
+    } catch {}
+
+    // 4. Immediately navigate to the login page
+    navigate('/login', { replace: true });
   }
 
   async function markAllNotificationsRead() {
@@ -332,7 +341,7 @@ export default function App() {
           })}
         </nav>
 
-        {/* Sidebar Footer with Active User Profile */}
+        {/* Sidebar Footer with Active User Profile & Explicit Sign Out */}
         <div className="sidebar-bottom">
           <div className="profile cursor-pointer" onClick={() => navigate('/profile')} title="Click to view & edit profile">
             <div className={`profile-avatar role-${userRole}`}>
@@ -344,17 +353,16 @@ export default function App() {
                 {userRole.toUpperCase()}
               </small>
             </div>
-            <button
-              className="icon-btn ml-auto"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLogout();
-              }}
-              title="Log Out"
-            >
-              <LogOut size={15} />
-            </button>
           </div>
+          <button
+            type="button"
+            className="sidebar-logout-btn"
+            onClick={handleLogout}
+            title="Sign Out of DukaFlow"
+          >
+            <LogOut size={15} />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 
@@ -388,44 +396,88 @@ export default function App() {
             {userRole !== 'customer' && (
               <div className="notif-wrapper">
                 <button
+                  type="button"
                   className="icon-btn relative"
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
                   title="Notifications"
+                  aria-label="Toggle Activity Notifications"
                 >
                   <Bell size={18} />
                   {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
                 </button>
 
                 {isNotifOpen && (
-                  <div className="notif-dropdown">
-                    <div className="notif-header">
-                      <b>Activity Alerts</b>
-                      {unreadCount > 0 && (
-                        <button className="text-btn" onClick={markAllNotificationsRead}>
-                          Mark all read
-                        </button>
-                      )}
-                    </div>
-                    <div className="notif-list">
-                      {notifications.length === 0 ? (
-                        <p className="p-3 text-muted text-center">No alerts recorded.</p>
-                      ) : (
-                        notifications.map((n) => (
-                          <div key={n._id} className={`notif-item ${n.read ? 'read' : 'unread'}`}>
-                            <b>{n.title}</b>
-                            <p>{n.message}</p>
-                            <small>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                  <>
+                    <div
+                      className="notif-backdrop"
+                      onClick={() => setIsNotifOpen(false)}
+                      title="Dismiss alerts"
+                    />
+                    <div className="notif-dropdown">
+                      <div className="notif-header">
+                        <div className="notif-header-title">
+                          <Bell size={15} />
+                          <b>Activity Alerts</b>
+                          {unreadCount > 0 && (
+                            <span className="notif-count-pill">{unreadCount} new</span>
+                          )}
+                        </div>
+                        <div className="notif-header-actions">
+                          {unreadCount > 0 && (
+                            <button
+                              type="button"
+                              className="notif-mark-read-btn"
+                              onClick={markAllNotificationsRead}
+                            >
+                              Mark read
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="notif-close-btn"
+                            onClick={() => setIsNotifOpen(false)}
+                            title="Close alerts popup"
+                            aria-label="Close alerts popup"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="notif-list">
+                        {notifications.length === 0 ? (
+                          <div className="notif-empty">
+                            <Check size={22} className="notif-empty-icon" />
+                            <p>No activity alerts recorded.</p>
                           </div>
-                        ))
-                      )}
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n._id}
+                              className={`notif-item ${n.read ? 'read' : 'unread'}`}
+                            >
+                              <div className="notif-item-header">
+                                <span className="notif-item-title">{n.title}</span>
+                                <span className="notif-item-time">
+                                  {new Date(n.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              <p className="notif-item-msg">{n.message}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
 
             {/* Clean User Profile Quick Action */}
             <button
+              type="button"
               className="topbar-user-pill"
               onClick={() => navigate('/profile')}
               title="View & Edit My Profile"
@@ -440,11 +492,13 @@ export default function App() {
             </button>
 
             <button
-              className="icon-btn"
+              type="button"
+              className="topbar-logout-btn"
               onClick={handleLogout}
-              title="Sign Out"
+              title="Sign Out of DukaFlow"
             >
               <LogOut size={16} />
+              <span>Sign Out</span>
             </button>
           </div>
         </header>
