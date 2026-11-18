@@ -195,8 +195,13 @@ export default function App() {
     );
   }
 
-  // 2. Explicit Landing Page (Accessible whether logged in or out)
+  // 2. Explicit Landing Page (Only for unauthenticated visitors)
   if (isExplicitLanding) {
+    if (currentUser) {
+      if (currentUser.role === 'cashier') return <Navigate to="/pos" replace />;
+      if (currentUser.role === 'customer') return <Navigate to="/storefront" replace />;
+      return <Navigate to="/dashboard" replace />;
+    }
     return (
       <LandingView
         currentUser={currentUser}
@@ -346,18 +351,11 @@ export default function App() {
               <LogOut size={15} />
             </button>
           </div>
-
-          <div className="sidebar-public-links mt-2">
-            <Link to="/landing" className="text-xs text-muted d-flex items-center gap-1">
-              <Globe size={12} />
-              <span>Product Overview (Landing)</span>
-            </Link>
-          </div>
         </div>
       </aside>
 
       {/* Main Backoffice Workspace */}
-      <main className="main-content">
+      <main className="main main-content">
         {/* Top Header Bar */}
         <header className="topbar">
           <div className="topbar-left">

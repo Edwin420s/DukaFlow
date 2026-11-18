@@ -150,18 +150,13 @@ export default function ProfileView({ currentUser, onUserUpdated, shop }) {
 
           <hr className="profile-divider" />
 
-          {/* Public Links */}
+          {/* Storefront Link */}
           <div className="profile-quick-links">
-            <b>Public Navigation</b>
+            <b>Online Store</b>
             <Link to="/storefront" className="profile-action-link">
               <Store size={15} />
               <span>Customer Online Storefront</span>
               <ExternalLink size={13} className="ml-auto" />
-            </Link>
-            <Link to="/landing" className="profile-action-link">
-              <ShieldCheck size={15} />
-              <span>Product Overview & Features</span>
-              <ArrowRight size={13} className="ml-auto" />
             </Link>
           </div>
         </div>

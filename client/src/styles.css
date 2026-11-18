@@ -224,12 +224,17 @@ code, pre {
   font-size: 11px;
 }
 
-.main {
+.main,
+.main-content {
   margin-left: 260px;
   flex: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: calc(100% - 260px);
+  max-width: calc(100% - 260px);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .topbar {
